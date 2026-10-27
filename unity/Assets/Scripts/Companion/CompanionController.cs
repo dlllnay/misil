@@ -1,3 +1,4 @@
+
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -5,11 +6,14 @@ using UnityEngine.AI;
 [RequireComponent(typeof(RaycastObstacleSensor))]
 public class CompanionController : MonoBehaviour
 {
-    private readonly CompanionStateMachine _machine = new CompanionStateMachine();
+    private readonly CompanionStateMachine _machine =
+        new CompanionStateMachine();
 
     public NavMeshAgent Agent { get; private set; }
     public IObstacleSensor Sensor { get; private set; }
-    public string CurrentStateName => _machine.Current?.Name ?? "-";
+
+    public string CurrentStateName =>
+        _machine.Current?.Name ?? "-";
 
     private void Awake()
     {
@@ -27,9 +31,20 @@ public class CompanionController : MonoBehaviour
         _machine.Tick();
     }
 
-    public void CommandMoveTo(Vector3 target)
+
+    public void CommandMoveTo(Vector3 target, SealStone stone = null)
     {
-        _machine.ChangeState(new MoveToTargetState(this, target));
+        _machine.ChangeState(
+            new MoveToTargetState(this, target, stone));
+    }
+
+
+    public void CommandInteract(SealStone stone)
+    {
+        if (stone == null) return;
+
+        _machine.ChangeState(
+            new InteractState(this, stone));
     }
 
     public void EnterIdle()
