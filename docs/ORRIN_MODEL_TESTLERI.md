@@ -40,3 +40,35 @@ Phi3-mini modeli bellek yetersizligi nedeniyle calistirilamadi.
 
 Orrin icin karakter talimatlari ve cevap uzunlugu sinirlandirmasi gelistirilecek.
 
+
+
+\## Ozel Orrin Modeli Testi
+
+
+
+Model: orrin (TinyLlama tabanli)
+
+
+
+Orrin modeli Modelfile kullanilarak basariyla olusturuldu.
+
+Uc farkli karakter sorusuyla test edildi.
+
+
+
+Sonuclar:
+
+\- Model Turkce konusma kurallarina uymadi.
+
+\- Bazi cevaplar Ingilizce uretildi.
+
+\- Karakter kimligi korunamadi.
+
+\- Cevaplar anlamsiz veya eksik kaldi.
+
+
+
+Karar:
+
+Orrin icin hazir diyaloglar ve Ollama baglantisini birlestiren hibrit sistem gelistirilecek.
+
