@@ -19,7 +19,7 @@ namespace MuhurluKapi.Llm
         private readonly string apiUrl;
 
         public OllamaClient(
-            string modelName = "tinyllama:latest",
+            string modelName = "orrin:latest",
             string apiUrl = "http://127.0.0.1:11434/api/generate")
         {
             this.modelName = modelName;
