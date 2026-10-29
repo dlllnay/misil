@@ -27,6 +27,7 @@ public class CompanionSealCommand : MonoBehaviour
                 "MuhurHedef veya SealStone atanmamis!");
             return;
         }
+        Debug.Log($"MuhurHedef dunya konumu: {muhurHedef.position}");
 
         _controller.CommandMoveTo(
             muhurHedef.position,
