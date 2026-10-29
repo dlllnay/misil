@@ -6,6 +6,7 @@ using UnityEngine.InputSystem;
 public class PlayerMovement : MonoBehaviour
 {
     [SerializeField] private float moveSpeed = 4f;
+    [SerializeField] private float rotationSpeed = 12f;
     [SerializeField] private float gravity = -9.81f;
 
     private CharacterController controller;
@@ -20,7 +21,8 @@ public class PlayerMovement : MonoBehaviour
 
     private void Update()
     {
-        if (Keyboard.current == null) return;
+        if (Keyboard.current == null)
+            return;
 
         Vector2 input = Vector2.zero;
 
@@ -29,38 +31,61 @@ public class PlayerMovement : MonoBehaviour
         if (Keyboard.current.aKey.isPressed) input.x -= 1;
         if (Keyboard.current.dKey.isPressed) input.x += 1;
 
-        Vector3 direction =
-            new Vector3(input.x, 0, input.y).normalized;
+        input = Vector2.ClampMagnitude(input, 1f);
 
-        // Animator'a hareket bilgisini gönder.
-        if (animator != null)
+        Vector3 moveDirection = Vector3.zero;
+
+        Camera cam = Camera.main;
+
+        if (cam != null)
         {
-            animator.SetFloat(
-                "Speed",
-                direction.magnitude
-            );
+            Vector3 forward = cam.transform.forward;
+            Vector3 right = cam.transform.right;
+
+            // Karakterin yerde hareket etmesini sagla.
+            forward.y = 0f;
+            right.y = 0f;
+
+            forward.Normalize();
+            right.Normalize();
+
+            moveDirection =
+                forward * input.y + right * input.x;
+        }
+        else
+        {
+            moveDirection =
+                new Vector3(input.x, 0f, input.y);
         }
 
-        if (direction.sqrMagnitude > 0.01f)
+        if (moveDirection.sqrMagnitude > 0.001f)
         {
-            controller.Move(
-                direction * moveSpeed * Time.deltaTime
-            );
+            Quaternion targetRotation =
+                Quaternion.LookRotation(moveDirection);
 
             transform.rotation = Quaternion.Slerp(
                 transform.rotation,
-                Quaternion.LookRotation(direction),
-                10f * Time.deltaTime
+                targetRotation,
+                rotationSpeed * Time.deltaTime
             );
         }
 
-        if (controller.isGrounded && verticalVelocity < 0)
+        if (controller.isGrounded && verticalVelocity < 0f)
+        {
             verticalVelocity = -2f;
+        }
 
         verticalVelocity += gravity * Time.deltaTime;
 
-        controller.Move(
-            Vector3.up * verticalVelocity * Time.deltaTime
-        );
+        Vector3 velocity =
+            moveDirection * moveSpeed +
+            Vector3.up * verticalVelocity;
+
+        controller.Move(velocity * Time.deltaTime);
+
+        if (animator != null)
+        {
+            animator.SetFloat("Speed", input.magnitude);
+        }
     }
 }
