@@ -23,7 +23,7 @@ public class ArrowProjectile : MonoBehaviour
             distance))
         {
             CrystalTarget crystal =
-                hit.collider.GetComponent<CrystalTarget>();
+                hit.collider.GetComponentInParent<CrystalTarget>();
 
             if (crystal != null)
             {

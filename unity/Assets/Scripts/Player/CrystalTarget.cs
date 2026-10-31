@@ -5,13 +5,9 @@ public class CrystalTarget : MonoBehaviour
 {
     [SerializeField] private Color activatedColor = Color.green;
 
-    private Renderer crystalRenderer;
     private bool activated;
 
-    private void Awake()
-    {
-        crystalRenderer = GetComponent<Renderer>();
-    }
+    public bool IsActivated => activated;
 
     public void Activate()
     {
@@ -19,11 +15,28 @@ public class CrystalTarget : MonoBehaviour
 
         activated = true;
 
-        if (crystalRenderer != null)
+        // Kristalin icindeki gorunur 3D modelleri bul.
+        Renderer[] renderers =
+            GetComponentsInChildren<Renderer>();
+
+        foreach (Renderer rend in renderers)
         {
-            crystalRenderer.material.color = activatedColor;
+            if (!rend.enabled) continue;
+
+            foreach (Material mat in rend.materials)
+            {
+                mat.color = activatedColor;
+
+                if (mat.HasProperty("_EmissionColor"))
+                {
+                    mat.SetColor(
+                        "_EmissionColor",
+                        activatedColor * 2f
+                    );
+                }
+            }
         }
 
-        Debug.Log("Buyulu kristal etkinlestirildi!");
+        Debug.Log(gameObject.name + " etkinlestirildi!");
     }
 }
