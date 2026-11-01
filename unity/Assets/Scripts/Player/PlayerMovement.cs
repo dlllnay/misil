@@ -58,10 +58,23 @@ public class PlayerMovement : MonoBehaviour
                 new Vector3(input.x, 0f, input.y);
         }
 
-        if (moveDirection.sqrMagnitude > 0.001f)
+
+        bool isAiming = Mouse.current != null &&
+                        Mouse.current.rightButton.isPressed;
+
+        Vector3 facingDirection = moveDirection;
+
+        if (isAiming && cam != null)
+        {
+            facingDirection = cam.transform.forward;
+            facingDirection.y = 0f;
+            facingDirection.Normalize();
+        }
+
+        if (facingDirection.sqrMagnitude > 0.001f)
         {
             Quaternion targetRotation =
-                Quaternion.LookRotation(moveDirection);
+                Quaternion.LookRotation(facingDirection);
 
             transform.rotation = Quaternion.Slerp(
                 transform.rotation,
@@ -69,6 +82,7 @@ public class PlayerMovement : MonoBehaviour
                 rotationSpeed * Time.deltaTime
             );
         }
+
 
         if (controller.isGrounded && verticalVelocity < 0f)
         {

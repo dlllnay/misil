@@ -1,3 +1,4 @@
+
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -15,12 +16,37 @@ public class CompanionClickInput : MonoBehaviour
 
     private void Update()
     {
-        if (Mouse.current == null || !Mouse.current.leftButton.wasPressedThisFrame) return;
+        if (Mouse.current == null || Keyboard.current == null)
+            return;
 
-        Ray ray = _camera.ScreenPointToRay(Mouse.current.position.ReadValue());
+        bool shiftPressed =
+            Keyboard.current.leftShiftKey.isPressed ||
+            Keyboard.current.rightShiftKey.isPressed;
+
+        if (!shiftPressed ||
+            !Mouse.current.leftButton.wasPressedThisFrame)
+            return;
+
+        if (_camera == null)
+            return;
+
+        Ray ray = _camera.ScreenPointToRay(
+            Mouse.current.position.ReadValue()
+        );
+
+
         if (Physics.Raycast(ray, out RaycastHit hit))
         {
+            NyraFollowPlayer follow =
+                GetComponent<NyraFollowPlayer>();
+
+            if (follow != null)
+            {
+                follow.StopFollowing();
+            }
+
             _controller.CommandMoveTo(hit.point);
         }
+
     }
 }

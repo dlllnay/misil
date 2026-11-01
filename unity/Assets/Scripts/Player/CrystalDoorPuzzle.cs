@@ -6,6 +6,7 @@ public class CrystalDoorPuzzle : MonoBehaviour
     [SerializeField] private CrystalTarget crystal1;
     [SerializeField] private CrystalTarget crystal2;
     [SerializeField] private CrystalTarget crystal3;
+    [SerializeField] private NyraRune nyraRune;
 
     [SerializeField] private Transform door;
     [SerializeField] private float openDistance = 3f;
@@ -34,7 +35,9 @@ public class CrystalDoorPuzzle : MonoBehaviour
         if (!opening &&
             crystal1.IsActivated &&
             crystal2.IsActivated &&
-            crystal3.IsActivated)
+            crystal3.IsActivated &&
+            nyraRune != null &&
+            nyraRune.IsActivated)
         {
             opening = true;
             Debug.Log("Uc kristal aktif! Muhurlu kapi aciliyor!");
