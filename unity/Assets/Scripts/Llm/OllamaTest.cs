@@ -8,23 +8,23 @@ namespace MuhurluKapi.Llm
     {
         private async void Start()
         {
-            Debug.Log("Orrin: Ollama baglantisi test ediliyor...");
+            Debug.Log("Orrin: JSON yaniti test ediliyor...");
 
             try
             {
-                ILlmClient client = new OllamaClient();
+                OllamaClient client = new OllamaClient();
 
-                string cevap = await client.GenerateResponseAsync(
-                    "Sen Orrin adinda fantastik bir kapi bekcisisin. Oyuncuya Turkce tek cumleyle selam ver."
+                NpcResponse cevap = await client.GenerateNpcResponseAsync(
+                    "Merhaba Orrin, sen kimsin?"
                 );
 
-                Debug.Log("Orrin cevabi: " + cevap);
+                Debug.Log("Orrin konusmasi: " + cevap.Dialogue);
+                Debug.Log("Orrin karari: " + cevap.Action);
             }
             catch (Exception ex)
             {
-                Debug.LogError("Ollama baglanti hatasi: " + ex.Message);
+                Debug.LogError("Ollama JSON test hatasi: " + ex.Message);
             }
         }
     }
 }
-  

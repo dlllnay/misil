@@ -34,7 +34,8 @@ namespace MuhurluKapi.Llm
             {
                 model = modelName,
                 prompt = prompt,
-                stream = false
+                stream = false,
+                format = "json"
             };
 
             string json = JsonSerializer.Serialize(requestData);
@@ -55,6 +56,41 @@ namespace MuhurluKapi.Llm
                 .GetProperty("response")
                 .GetString() ?? "";
         }
+
+        public async Task<NpcResponse> GenerateNpcResponseAsync(
+         string prompt,
+         CancellationToken cancellationToken = default)
+        {
+            string jsonPrompt = $@"
+             Sen Orrin adında gizemli bir kapı bekçisisin.
+
+             Oyuncunun mesajına yalnızca geçerli JSON ile cevap ver.
+             JSON dışında hiçbir açıklama, markdown veya kod bloğu yazma.
+
+             JSON tam olarak şu iki alanı içermeli:
+             - dialogue: Oyuncuya söyleyeceğin en fazla iki kısa Türkçe cümle.
+             - action: Şimdilik her zaman ""none"".
+
+             Örnek JSON biçimi:
+             {{""dialogue"":""Kapının sırları henüz açığa çıkmadı."",""action"":""none""}}
+
+             Oyuncunun mesajı:
+             {prompt}
+             ";
+
+            string responseText = await GenerateResponseAsync(
+                jsonPrompt, cancellationToken);
+
+            NpcResponse npcResponse =
+                JsonSerializer.Deserialize<NpcResponse>(responseText);
+
+            if (npcResponse == null)
+            {
+                throw new JsonException("NPC yanıtı boş.");
+            }
+
+            return npcResponse;
+        }
+
     }
 }
-  
