@@ -1,4 +1,5 @@
-﻿using System.Text.Json.Serialization;
+﻿
+using System.Text.Json.Serialization;
 
 namespace MuhurluKapi.Llm
 {
@@ -9,5 +10,15 @@ namespace MuhurluKapi.Llm
 
         [JsonPropertyName("action")]
         public string Action { get; set; } = "none";
+
+        public bool IsValid()
+        {
+            if (string.IsNullOrWhiteSpace(Dialogue))
+            {
+                return false;
+            }
+
+            return Action == "none" || Action == "open_door";
+        }
     }
 }

@@ -30,13 +30,32 @@ namespace MuhurluKapi.Llm
             string prompt,
             CancellationToken cancellationToken = default)
         {
+
             var requestData = new
             {
                 model = modelName,
                 prompt = prompt,
                 stream = false,
-                format = "json"
+                format = new
+                {
+                    type = "object",
+                    properties = new
+                    {
+                        dialogue = new
+                        {
+                            type = "string"
+                        },
+                        action = new
+                        {
+                            type = "string",
+                            @enum = new[] { "none", "open_door" }
+                        }
+                    },
+                    required = new[] { "dialogue", "action" },
+                    additionalProperties = false
+                }
             };
+
 
             string json = JsonSerializer.Serialize(requestData);
 
@@ -68,8 +87,16 @@ namespace MuhurluKapi.Llm
              JSON dışında hiçbir açıklama, markdown veya kod bloğu yazma.
 
              JSON tam olarak şu iki alanı içermeli:
-             - dialogue: Oyuncuya söyleyeceğin en fazla iki kısa Türkçe cümle.
-             - action: Şimdilik her zaman ""none"".
+             - dialogue: Oyuncuya doğrudan hitap eden en fazla iki kısa Türkçe cümle.
+             - dialogue alanında yalnızca Orrin'in kendi sözleri yer alsın; olay anlatma.
+             - Üçüncü şahıs anlatımı kullanma, oyuncunun hareketlerini veya sözlerini uydurma.
+             - action: Yalnızca ""none"" veya ""open_door"" olabilir.
+             - Oyuncu kapının açılmasını açıkça isterse ""open_door"" seç.
+             - Diğer bütün mesajlarda ""none"" seç.
+             - ""open_door"" seçersen kapıyı açmayı kabul ettiğini açıkça söyle.
+             - ""open_door"" seçtiğinde soru sorma, oyuncudan tekrar izin isteme.
+             - dialogue alanında yalnızca Orrin'in oyuncuya söylediği sözler bulunsun.
+             - ""none"" seçersen Orrin karakterine uygun kısa bir cevap ver.
 
              Örnek JSON biçimi:
              {{""dialogue"":""Kapının sırları henüz açığa çıkmadı."",""action"":""none""}}
@@ -84,9 +111,10 @@ namespace MuhurluKapi.Llm
             NpcResponse npcResponse =
                 JsonSerializer.Deserialize<NpcResponse>(responseText);
 
-            if (npcResponse == null)
+            if (npcResponse == null || !npcResponse.IsValid())
             {
-                throw new JsonException("NPC yanıtı boş.");
+                throw new JsonException(
+                    "NPC yanıtı geçersiz: dialogue veya action hatalı.");
             }
 
             return npcResponse;

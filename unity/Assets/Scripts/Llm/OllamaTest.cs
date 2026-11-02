@@ -15,7 +15,7 @@ namespace MuhurluKapi.Llm
                 OllamaClient client = new OllamaClient();
 
                 NpcResponse cevap = await client.GenerateNpcResponseAsync(
-                    "Merhaba Orrin, sen kimsin?"
+                    "Orrin, lütfen kapıyı aç."
                 );
 
                 Debug.Log("Orrin konusmasi: " + cevap.Dialogue);
