@@ -5,6 +5,8 @@ using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Collections.Generic;
+
 
 namespace MuhurluKapi.Llm
 {
@@ -18,12 +20,64 @@ namespace MuhurluKapi.Llm
         private readonly string modelName;
         private readonly string apiUrl;
 
+        public class ChatMessage
+        {
+            public string role { get; set; }
+            public string content { get; set; }
+        }
+
         public OllamaClient(
             string modelName = "orrin:latest",
-            string apiUrl = "http://127.0.0.1:11434/api/generate")
+            string apiUrl = "http://127.0.0.1:11434/api/chat")
         {
             this.modelName = modelName;
             this.apiUrl = apiUrl;
+        }
+
+        public async Task<string> GenerateChatResponseAsync(
+            List<ChatMessage> messages,
+            CancellationToken cancellationToken = default)
+        {
+            var requestData = new
+            {
+                model = modelName,
+                messages = messages,
+                stream = false,
+                format = new
+                {
+                    type = "object",
+                    properties = new
+                    {
+                        dialogue = new { type = "string" },
+                        action = new
+                        {
+                            type = "string",
+                            @enum = new[] { "none", "open_door" }
+                        }
+                    },
+                    required = new[] { "dialogue", "action" },
+                    additionalProperties = false
+                }
+            };
+
+            string json = JsonSerializer.Serialize(requestData);
+
+            using var content = new StringContent(
+                json, Encoding.UTF8, "application/json");
+
+            using var response = await Http.PostAsync(
+                apiUrl, content, cancellationToken);
+
+            response.EnsureSuccessStatusCode();
+
+            string result = await response.Content.ReadAsStringAsync();
+
+            using var document = JsonDocument.Parse(result);
+
+            return document.RootElement
+                .GetProperty("message")
+                .GetProperty("content")
+                .GetString() ?? "";
         }
 
         public async Task<string> GenerateResponseAsync(
@@ -34,7 +88,16 @@ namespace MuhurluKapi.Llm
             var requestData = new
             {
                 model = modelName,
-                prompt = prompt,
+
+                messages = new[]
+                {
+                    new
+                    {
+                      role = "user",
+                      content = prompt
+                    }
+                },
+
                 stream = false,
                 format = new
                 {
@@ -71,9 +134,31 @@ namespace MuhurluKapi.Llm
 
             using var document = JsonDocument.Parse(result);
 
+
             return document.RootElement
-                .GetProperty("response")
+                .GetProperty("message")
+                .GetProperty("content")
                 .GetString() ?? "";
+
+        }
+
+        public async Task<NpcResponse> GenerateNpcChatResponseAsync(
+            List<ChatMessage> messages,
+            CancellationToken cancellationToken = default)
+        {
+            string responseText = await GenerateChatResponseAsync(
+                messages, cancellationToken);
+
+            NpcResponse npcResponse =
+                JsonSerializer.Deserialize<NpcResponse>(responseText);
+
+            if (npcResponse == null || !npcResponse.IsValid())
+            {
+                throw new JsonException(
+                    "NPC yanıtı geçersiz: dialogue veya action hatalı.");
+            }
+
+            return npcResponse;
         }
 
         public async Task<NpcResponse> GenerateNpcResponseAsync(

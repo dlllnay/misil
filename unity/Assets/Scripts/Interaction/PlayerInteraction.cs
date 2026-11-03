@@ -1,6 +1,7 @@
 
 using UnityEngine;
 using UnityEngine.InputSystem;
+using TMPro;
 
 namespace MuhurluKapi.Interaction
 {
@@ -9,10 +10,15 @@ namespace MuhurluKapi.Interaction
         [SerializeField] private Transform orrin;
         [SerializeField] private float interactionDistance = 3.5f;
         [SerializeField] private GameObject dialoguePanel;
+        [SerializeField] private TMP_InputField playerInput;
 
         private void Update()
         {
             if (orrin == null || Keyboard.current == null)
+            {
+                return;
+            }
+            if (playerInput != null && playerInput.isFocused)
             {
                 return;
             }
