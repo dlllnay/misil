@@ -1060,6 +1060,7 @@ MonoBehaviour:
   playerInput: {fileID: 848880615}
   sendButton: {fileID: 1027887747}
   sealedDoor: {fileID: 1691479601}
+  requestTimeoutSeconds: 120
 --- !u!114 &391387227
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1131,6 +1132,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MuhurluKapi.Interaction.OrrinSealStone
   engel: {fileID: 0}
+  interactionDistance: 2.5
   interactionPlayer: {fileID: 1799073725}
   reachDistance: 2.5
 --- !u!65 &565055517
