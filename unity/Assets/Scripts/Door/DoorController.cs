@@ -7,17 +7,32 @@ namespace MuhurluKapi.Door
     {
         [Header("Bulmaca Kosulu")]
         [SerializeField] private bool requirePuzzle = true;
+
+        [SerializeField] private SealStone sealStone;
+
         [SerializeField] private GameObject puzzleObstacle;
 
         public bool IsOpen { get; private set; }
 
-        public bool IsPuzzleCompleted =>
-            !requirePuzzle ||
-            (puzzleObstacle != null && !puzzleObstacle.activeSelf);
+        public bool IsPuzzleCompleted
+        {
+            get
+            {
+                if (!requirePuzzle)
+                    return true;
+
+                if (sealStone != null)
+                    return sealStone.IsActivated;
+
+                return puzzleObstacle != null &&
+                       !puzzleObstacle.activeSelf;
+            }
+        }
 
         public void OpenDoor()
         {
-            if (IsOpen) return;
+            if (IsOpen)
+                return;
 
             if (!IsPuzzleCompleted)
             {

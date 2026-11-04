@@ -21,6 +21,11 @@ public class CompanionSealCommand : MonoBehaviour
             !Keyboard.current.eKey.wasPressedThisFrame)
             return;
 
+        // No companion seal command is configured in this scene. E may belong
+        // to another interaction (for example Orrin's independent seal).
+        if (muhurHedef == null && sealStone == null)
+            return;
+
         if (muhurHedef == null || sealStone == null)
         {
             Debug.LogWarning(
