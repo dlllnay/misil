@@ -21,7 +21,11 @@ public class NyraRune : MonoBehaviour
     {
         if (activated || nyra == null)
             return;
+        RunePlatformRise platform =
+    GetComponent<RunePlatformRise>();
 
+        if (platform != null && !platform.IsRaised)
+            return;
         Vector3 runePosition = transform.position;
         Vector3 nyraPosition = nyra.position;
 

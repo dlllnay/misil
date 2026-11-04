@@ -43,13 +43,18 @@ public class CrystalDoorPuzzle : MonoBehaviour
             Debug.Log("Uc kristal aktif! Muhurlu kapi aciliyor!");
         }
 
-        if (opening)
+        if (opening && door.gameObject.activeSelf)
         {
             door.position = Vector3.MoveTowards(
                 door.position,
                 openPosition,
                 openSpeed * Time.deltaTime
             );
+
+            // Keep the closed barrier until the puzzle authorizes opening, then
+            // remove the sunk model, collider and NavMesh obstacle together.
+            if (door.position == openPosition)
+                door.gameObject.SetActive(false);
         }
     }
 }

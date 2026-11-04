@@ -60,7 +60,9 @@ namespace MuhurluKapi.Door
             }
 
             IsOpen = true;
-            transform.Rotate(0f, 90f, 0f);
+            // Remove the visible door and its physics/navigation barriers together.
+            // Rotating a box about its centre leaves an obstruction in the passage.
+            gameObject.SetActive(false);
 
             Debug.Log("Mühürlü kapı açıldı!");
         }
