@@ -1,12 +1,12 @@
 
 using System;
+using System.Collections.Generic;
 using System.Net.Http;
 using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Collections.Generic;
-
+using UnityEngine;
 
 namespace MuhurluKapi.Llm
 {
@@ -22,8 +22,8 @@ namespace MuhurluKapi.Llm
 
         public class ChatMessage
         {
-            public string role { get; set; }
-            public string content { get; set; }
+            public string role { get; set; } = "";
+            public string content { get; set; } = "";
         }
 
         public OllamaClient(
@@ -48,14 +48,28 @@ namespace MuhurluKapi.Llm
                     type = "object",
                     properties = new
                     {
-                        dialogue = new { type = "string" },
+                        dialogue = new
+                        {
+                            type = "string"
+                        },
                         action = new
                         {
                             type = "string",
                             @enum = new[] { "none", "open_door" }
+                        },
+                        trust_delta = new
+                        {
+                            type = "integer",
+                            minimum = -1,
+                            maximum = 1
                         }
                     },
-                    required = new[] { "dialogue", "action" },
+                    required = new[]
+                    {
+                        "dialogue",
+                        "action",
+                        "trust_delta"
+                    },
                     additionalProperties = false
                 }
             };
@@ -84,20 +98,17 @@ namespace MuhurluKapi.Llm
             string prompt,
             CancellationToken cancellationToken = default)
         {
-
             var requestData = new
             {
                 model = modelName,
-
                 messages = new[]
                 {
                     new
                     {
-                      role = "user",
-                      content = prompt
+                        role = "user",
+                        content = prompt
                     }
                 },
-
                 stream = false,
                 format = new
                 {
@@ -112,13 +123,23 @@ namespace MuhurluKapi.Llm
                         {
                             type = "string",
                             @enum = new[] { "none", "open_door" }
+                        },
+                        trust_delta = new
+                        {
+                            type = "integer",
+                            minimum = -1,
+                            maximum = 1
                         }
                     },
-                    required = new[] { "dialogue", "action" },
+                    required = new[]
+                    {
+                        "dialogue",
+                        "action",
+                        "trust_delta"
+                    },
                     additionalProperties = false
                 }
             };
-
 
             string json = JsonSerializer.Serialize(requestData);
 
@@ -134,12 +155,10 @@ namespace MuhurluKapi.Llm
 
             using var document = JsonDocument.Parse(result);
 
-
             return document.RootElement
                 .GetProperty("message")
                 .GetProperty("content")
                 .GetString() ?? "";
-
         }
 
         public async Task<NpcResponse> GenerateNpcChatResponseAsync(
@@ -155,43 +174,49 @@ namespace MuhurluKapi.Llm
             if (npcResponse == null || !npcResponse.IsValid())
             {
                 throw new JsonException(
-                    "NPC yanıtı geçersiz: dialogue veya action hatalı.");
+                    "NPC yanıtı geçersiz: dialogue, action veya trust_delta hatalı.");
             }
 
             return npcResponse;
         }
 
         public async Task<NpcResponse> GenerateNpcResponseAsync(
-         string prompt,
-         CancellationToken cancellationToken = default)
+            string prompt,
+            CancellationToken cancellationToken = default)
         {
             string jsonPrompt = $@"
-             Sen Orrin adında gizemli bir kapı bekçisisin.
+Sen Orrin adında gizemli bir kapı bekçisisin.
 
-             Oyuncunun mesajına yalnızca geçerli JSON ile cevap ver.
-             JSON dışında hiçbir açıklama, markdown veya kod bloğu yazma.
+Oyuncunun mesajına yalnızca geçerli JSON ile cevap ver.
+JSON dışında hiçbir açıklama, markdown veya kod bloğu yazma.
 
-             JSON tam olarak şu iki alanı içermeli:
-             - dialogue: Oyuncuya doğrudan hitap eden en fazla iki kısa Türkçe cümle.
-             - dialogue alanında yalnızca Orrin'in kendi sözleri yer alsın; olay anlatma.
-             - Üçüncü şahıs anlatımı kullanma, oyuncunun hareketlerini veya sözlerini uydurma.
-             - action: Yalnızca ""none"" veya ""open_door"" olabilir.
-             - Oyuncu kapının açılmasını açıkça isterse ""open_door"" seç.
-             - Diğer bütün mesajlarda ""none"" seç.
-             - ""open_door"" seçersen kapıyı açmayı kabul ettiğini açıkça söyle.
-             - ""open_door"" seçtiğinde soru sorma, oyuncudan tekrar izin isteme.
-             - dialogue alanında yalnızca Orrin'in oyuncuya söylediği sözler bulunsun.
-             - ""none"" seçersen Orrin karakterine uygun kısa bir cevap ver.
+JSON tam olarak şu üç alanı içermeli:
 
-             Örnek JSON biçimi:
-             {{""dialogue"":""Kapının sırları henüz açığa çıkmadı."",""action"":""none""}}
+- dialogue: Oyuncuya doğrudan hitap eden en fazla iki kısa Türkçe cümle.
+- dialogue alanında yalnızca Orrin'in kendi sözleri yer alsın.
+- Üçüncü şahıs anlatımı kullanma.
+- Oyuncunun hareketlerini veya sözlerini uydurma.
+- action: Yalnızca ""none"" veya ""open_door"" olabilir.
+- Oyuncu kapının açılmasını açıkça isterse ""open_door"" seç.
+- Diğer bütün mesajlarda ""none"" seç.
+- trust_delta: Yalnızca -1, 0 veya 1 olabilir.
+- Oyuncu saygılı, samimi ve ikna ediciyse trust_delta 1 seç.
+- Oyuncu tehditkâr veya hakaret ediciyse trust_delta -1 seç.
+- Diğer durumlarda trust_delta 0 seç.
+- ""open_door"" seçersen kapıyı açmayı kabul ettiğini söyle.
+- ""none"" seçersen Orrin karakterine uygun kısa bir cevap ver.
 
-             Oyuncunun mesajı:
-             {prompt}
-             ";
+Örnek JSON:
+{{""dialogue"":""Sözlerinde samimiyet görüyorum, yolcu."",""action"":""none"",""trust_delta"":1}}
+
+Oyuncunun mesajı:
+{prompt}
+";
 
             string responseText = await GenerateResponseAsync(
                 jsonPrompt, cancellationToken);
+
+            Debug.Log("Ollama ham JSON: " + responseText);
 
             NpcResponse npcResponse =
                 JsonSerializer.Deserialize<NpcResponse>(responseText);
@@ -199,11 +224,10 @@ namespace MuhurluKapi.Llm
             if (npcResponse == null || !npcResponse.IsValid())
             {
                 throw new JsonException(
-                    "NPC yanıtı geçersiz: dialogue veya action hatalı.");
+                    "NPC yanıtı geçersiz: dialogue, action veya trust_delta hatalı.");
             }
 
             return npcResponse;
         }
-
     }
 }

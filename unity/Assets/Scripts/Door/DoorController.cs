@@ -5,13 +5,28 @@ namespace MuhurluKapi.Door
 {
     public class DoorController : MonoBehaviour
     {
-        private bool isOpen = false;
+        [Header("Bulmaca Kosulu")]
+        [SerializeField] private bool requirePuzzle = true;
+        [SerializeField] private GameObject puzzleObstacle;
+
+        public bool IsOpen { get; private set; }
+
+        public bool IsPuzzleCompleted =>
+            !requirePuzzle ||
+            (puzzleObstacle != null && !puzzleObstacle.activeSelf);
 
         public void OpenDoor()
         {
-            if (isOpen) return;
+            if (IsOpen) return;
 
-            isOpen = true;
+            if (!IsPuzzleCompleted)
+            {
+                Debug.LogWarning(
+                    "Kapı açılamaz: Bulmaca henüz tamamlanmadı!");
+                return;
+            }
+
+            IsOpen = true;
             transform.Rotate(0f, 90f, 0f);
 
             Debug.Log("Mühürlü kapı açıldı!");

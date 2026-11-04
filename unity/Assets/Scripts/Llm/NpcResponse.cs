@@ -11,14 +11,18 @@ namespace MuhurluKapi.Llm
         [JsonPropertyName("action")]
         public string Action { get; set; } = "none";
 
+        [JsonPropertyName("trust_delta")]
+        public int TrustDelta { get; set; } = 0;
+
         public bool IsValid()
         {
             if (string.IsNullOrWhiteSpace(Dialogue))
-            {
                 return false;
-            }
 
-            return Action == "none" || Action == "open_door";
+            if (Action != "none" && Action != "open_door")
+                return false;
+
+            return TrustDelta >= -1 && TrustDelta <= 1;
         }
     }
 }
