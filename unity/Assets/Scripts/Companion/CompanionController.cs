@@ -9,6 +9,8 @@ public class CompanionController : MonoBehaviour
     private readonly CompanionStateMachine _machine =
         new CompanionStateMachine();
 
+    private Animator movementAnimator;
+
     public NavMeshAgent Agent { get; private set; }
     public IObstacleSensor Sensor { get; private set; }
 
@@ -19,6 +21,9 @@ public class CompanionController : MonoBehaviour
     {
         Agent = GetComponent<NavMeshAgent>();
         Sensor = GetComponent<IObstacleSensor>();
+        movementAnimator = GetComponentInChildren<Animator>();
+        if (movementAnimator != null)
+            movementAnimator.applyRootMotion = false;
     }
 
     private void Start()
@@ -29,6 +34,14 @@ public class CompanionController : MonoBehaviour
     private void Update()
     {
         _machine.Tick();
+
+        if (movementAnimator != null)
+        {
+            float speed = Agent.isActiveAndEnabled && Agent.isOnNavMesh
+                ? Vector3.ProjectOnPlane(Agent.velocity, Vector3.up).magnitude
+                : 0f;
+            movementAnimator.SetFloat("Speed", speed / Mathf.Max(Agent.speed, 0.01f));
+        }
     }
 
 

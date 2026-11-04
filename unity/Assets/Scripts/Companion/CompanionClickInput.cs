@@ -1,5 +1,6 @@
 
 using UnityEngine;
+using UnityEngine.AI;
 using UnityEngine.InputSystem;
 
 [RequireComponent(typeof(CompanionController))]
@@ -37,6 +38,29 @@ public class CompanionClickInput : MonoBehaviour
 
         if (Physics.Raycast(ray, out RaycastHit hit))
         {
+            NavMeshAgent agent = _controller.Agent;
+            if (agent == null || !agent.isActiveAndEnabled || !agent.isOnNavMesh)
+            {
+                Debug.LogWarning("Nyra komutu reddedildi: NavMeshAgent etkin bir NavMesh uzerinde degil.", this);
+                return;
+            }
+
+            // Reject walls and unreachable destinations before interrupting follow.
+            var filter = new NavMeshQueryFilter
+            {
+                agentTypeID = agent.agentTypeID,
+                areaMask = agent.areaMask
+            };
+            var path = new NavMeshPath();
+            if (Vector3.Dot(hit.normal, Vector3.up) < 0.5f ||
+                !NavMesh.SamplePosition(hit.point, out NavMeshHit destination, 1.5f, filter) ||
+                !agent.CalculatePath(destination.position, path) ||
+                path.status != NavMeshPathStatus.PathComplete)
+            {
+                Debug.LogWarning("Nyra komutu reddedildi: Ulasilabilir bir zemin noktasi secin.", this);
+                return;
+            }
+
             NyraFollowPlayer follow =
                 GetComponent<NyraFollowPlayer>();
 
@@ -45,7 +69,7 @@ public class CompanionClickInput : MonoBehaviour
                 follow.StopFollowing();
             }
 
-            _controller.CommandMoveTo(hit.point);
+            _controller.CommandMoveTo(destination.position);
         }
 
     }
