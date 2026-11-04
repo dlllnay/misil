@@ -7,6 +7,7 @@ using UnityEngine.UI;
 using UnityEngine.InputSystem;
 using MuhurluKapi.Llm;
 using MuhurluKapi.Door;
+using Stopwatch = System.Diagnostics.Stopwatch;
 
 namespace MuhurluKapi.Dialogue
 {
@@ -33,23 +34,32 @@ namespace MuhurluKapi.Dialogue
         private bool IsOrrinConvinced =>
             trustPoints >= RequiredTrust;
 
+
         private const string OrrinSystemPrompt =
-            "Sen Orrin'sin. Kadim mühürlü kapıyı koruyan yaşlı, " +
-            "bilge ve gizemli bir bekçisin. " +
-            "Yalnızca Türkçe, doğal ve en fazla iki kısa cümleyle konuş. " +
-            "Oyuncuya doğrudan hitap et. Bir yapay zekâ asistanı gibi davranma. " +
-            "Önceki konuşma mesajlarını dikkate al. " +
+            "Sen Orrin'sin. Mühürlü Kapı adlı fantastik oyunda " +
+            "kadim kapıyı koruyan yaşlı, bilge ve temkinli bir bekçisin. " +
+            "Karşındaki kişi kapıyı geçmek isteyen bir yolcudur. " +
+            "Yalnızca Türkçe konuş. En fazla iki kısa cümle kur. " +
+            "Yolcuya 'sen' diye hitap et. " +
+            "Asla yapay zekâ asistanı, müşteri temsilcisi veya " +
+            "otel görevlisi gibi davranma. " +
+            "'Size nasıl yardımcı olabilirim?' gibi ifadeler kullanma. " +
+            "Otel, resepsiyon, teknoloji veya modern dünya hakkında konuşma. " +
+            "Oyuncunun sözlerini aynen tekrarlama. " +
+            "Kapıyı koruma görevin, yolcunun niyetini sınamak " +
+            "ve kadim mührün güvenliğini sağlamaktır. " +
+            "Bilmediğin hikâye ayrıntılarını uydurma. " +
+            "Önceki konuşmaları hatırla ve tutarlı cevap ver. " +
             "Yalnızca dialogue, action ve trust_delta alanlarını içeren JSON üret. " +
             "action yalnızca none veya open_door olabilir. " +
             "trust_delta yalnızca -1, 0 veya 1 olabilir. " +
-            "Oyuncu samimi, saygılı veya ikna edici bir gerekçe sunuyorsa " +
-            "trust_delta 1 seç. " +
-            "Oyuncu tehdit ediyor veya hakaret ediyorsa trust_delta -1 seç. " +
+            "Yolcu içten, saygılı ve gerekçeli biçimde konuşursa trust_delta 1 seç. " +
+            "Yolcu tehdit veya hakaret ederse trust_delta -1 seç. " +
             "Sıradan sorularda ve yalnızca kapıyı açma isteğinde trust_delta 0 seç. " +
-            "Oyuncunun son mesajında kapıyı açman açıkça isteniyorsa " +
+            "Yolcu son mesajında kapının açılmasını açıkça isterse " +
             "action open_door seç, diğer durumlarda none seç. " +
-            "Kapının fiziksel kilidini ve güven koşulunu oyun sistemi kontrol eder. " +
-            "Kapının ardındaki sırları uydurma.";
+            "Güven ve bulmaca koşullarını oyun sistemi denetler.";
+
 
         private void Update()
         {
@@ -95,6 +105,7 @@ namespace MuhurluKapi.Dialogue
             };
 
             conversationHistory.Add(playerMessage);
+            Stopwatch stopwatch = Stopwatch.StartNew();
 
             try
             {
@@ -111,6 +122,10 @@ namespace MuhurluKapi.Dialogue
 
                 NpcResponse response =
                     await ollamaClient.GenerateNpcChatResponseAsync(messages);
+                stopwatch.Stop();
+
+                UnityEngine.Debug.Log(
+                    $"Ollama yanit suresi: {stopwatch.Elapsed.TotalSeconds:F2} saniye");
 
                 conversationHistory.Add(new OllamaClient.ChatMessage
                 {
@@ -119,7 +134,7 @@ namespace MuhurluKapi.Dialogue
                 });
 
                 trustPoints = Mathf.Clamp(
-                    trustPoints + response.TrustDelta,
+                    trustPoints + response.TrustDelta.Value,
                     0,
                     RequiredTrust
                 );
@@ -127,7 +142,7 @@ namespace MuhurluKapi.Dialogue
                 Debug.Log(
                     $"Orrin karari: {response.Action}, " +
                     $"guven: {trustPoints}/{RequiredTrust}, " +
-                    $"degisim: {response.TrustDelta}"
+                    $"degisim: {response.TrustDelta.Value}"
                 );
 
                 if (response.Action == "open_door")
@@ -184,6 +199,11 @@ namespace MuhurluKapi.Dialogue
             }
             finally
             {
+                stopwatch.Stop();
+
+                UnityEngine.Debug.Log(
+                    $"Ollama toplam istek suresi: {stopwatch.Elapsed.TotalSeconds:F2} saniye");
+
                 isWaitingForResponse = false;
 
                 if (sendButton != null)
