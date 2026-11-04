@@ -29,7 +29,7 @@ namespace MuhurluKapi.Dialogue
         private bool isWaitingForResponse;
 
         private int trustPoints = 0;
-        private const int RequiredTrust = 3;
+        private const int RequiredTrust = DoorController.RequiredTrust;
 
         private bool IsOrrinConvinced =>
             trustPoints >= RequiredTrust;
@@ -149,6 +149,7 @@ namespace MuhurluKapi.Dialogue
                 {
                     if (!IsOrrinConvinced)
                     {
+                        Debug.Log("Kapı isteği reddedildi: Orrin güveni yetersiz.");
                         orrinText.text =
                             "Orrin: Henüz güvenimi kazanmadın, yolcu. " +
                             "Neden sana inanmalıyım?\n\n" +
@@ -164,6 +165,7 @@ namespace MuhurluKapi.Dialogue
                     }
                     else if (!sealedDoor.IsPuzzleCompleted)
                     {
+                        Debug.Log("Kapı isteği reddedildi: Orrin mührü etkin değil.");
                         orrinText.text =
                             "Orrin: Sana güveniyorum, ancak kapının " +
                             "mührü henüz çözülmedi.\n\n" +
@@ -171,7 +173,7 @@ namespace MuhurluKapi.Dialogue
                     }
                     else
                     {
-                        sealedDoor.OpenDoor();
+                        sealedDoor.OpenDoor(response, trustPoints);
 
                         orrinText.text = sealedDoor.IsOpen
                             ? "Orrin: " + response.Dialogue +
@@ -181,6 +183,7 @@ namespace MuhurluKapi.Dialogue
                 }
                 else
                 {
+                    Debug.Log("Kapı açılmadı: LLM action=none.");
                     orrinText.text =
                         "Orrin: " + response.Dialogue +
                         $"\n\n[Güven: {trustPoints}/{RequiredTrust}]";
