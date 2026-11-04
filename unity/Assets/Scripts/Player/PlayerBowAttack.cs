@@ -29,12 +29,15 @@ public class PlayerBowAttack : MonoBehaviour
             (Keyboard.current.leftShiftKey.isPressed ||
              Keyboard.current.rightShiftKey.isPressed);
 
-        if (Mouse.current.leftButton.wasPressedThisFrame &&
+
+        if (Mouse.current.rightButton.isPressed &&
+            Mouse.current.leftButton.wasPressedThisFrame &&
             !shiftPressed &&
             !isAttacking)
         {
             StartCoroutine(Shoot());
         }
+
     }
 
     private IEnumerator Shoot()

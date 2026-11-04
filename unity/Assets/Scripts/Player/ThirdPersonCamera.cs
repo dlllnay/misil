@@ -19,7 +19,9 @@ public class ThirdPersonCamera : MonoBehaviour
     private void Start()
     {
         if (target != null)
+        {
             yaw = target.eulerAngles.y;
+        }
     }
 
     private void LateUpdate()
@@ -27,21 +29,22 @@ public class ThirdPersonCamera : MonoBehaviour
         if (target == null)
             return;
 
+        // Sadece orta fare tusuna basiliyken kamerayi dondur.
         if (Mouse.current != null &&
-            Mouse.current.rightButton.isPressed)
+            Mouse.current.middleButton.isPressed)
         {
             Vector2 delta = Mouse.current.delta.ReadValue();
 
             yaw += delta.x * mouseSensitivity;
             pitch -= delta.y * mouseSensitivity;
+
             pitch = Mathf.Clamp(pitch, -25f, 65f);
         }
 
         Quaternion rotation =
             Quaternion.Euler(pitch, yaw, 0f);
 
-        // Kameranin baktigi nokta karakterin saginda.
-        // Bu sayede Ranger ekranda solda kalir.
+        // Ranger ekranda solda, nisangah ortada kalir.
         Vector3 focusPoint =
             target.position +
             Vector3.up * height +
@@ -51,6 +54,7 @@ public class ThirdPersonCamera : MonoBehaviour
             focusPoint -
             rotation * Vector3.forward * distance;
 
+        // Kamerayi yumusakca takip ettir.
         transform.position = Vector3.Lerp(
             transform.position,
             desiredPosition,

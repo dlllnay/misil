@@ -22,6 +22,10 @@ public class ArrowProjectile : MonoBehaviour
             out RaycastHit hit,
             distance))
         {
+
+            Debug.Log("OKUN CARPTIGI NESNE: " +
+                      hit.collider.name);
+
             CrystalTarget crystal =
                 hit.collider.GetComponentInParent<CrystalTarget>();
 
