@@ -33,6 +33,8 @@ public class CompanionController : MonoBehaviour
 
     private void Update()
     {
+        if (TempleMenu.BlocksGameplay) return;
+
         _machine.Tick();
 
         if (movementAnimator != null)

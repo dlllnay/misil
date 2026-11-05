@@ -32,7 +32,7 @@ public class ThirdPersonCamera : MonoBehaviour
 
     private void LateUpdate()
     {
-        if (target == null)
+        if (TempleMenu.BlocksGameplay || target == null)
             return;
 
         bool orbiting = Mouse.current != null && Mouse.current.middleButton.isPressed;

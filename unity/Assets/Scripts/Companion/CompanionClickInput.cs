@@ -19,7 +19,7 @@ public class CompanionClickInput : MonoBehaviour
 
     private void Update()
     {
-        if (Mouse.current == null || Keyboard.current == null ||
+        if (TempleMenu.BlocksGameplay || Mouse.current == null || Keyboard.current == null ||
             (_interaction != null && _interaction.IsDialogueOpen))
             return;
 

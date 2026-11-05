@@ -31,6 +31,8 @@ public class NyraFollowPlayer : MonoBehaviour
 
     private void Update()
     {
+        if (TempleMenu.BlocksGameplay) return;
+
         if (Keyboard.current != null &&
             Keyboard.current.gKey.wasPressedThisFrame &&
             (playerInteraction == null || !playerInteraction.IsDialogueOpen) &&

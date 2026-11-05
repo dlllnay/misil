@@ -235,6 +235,13 @@ public sealed class QuestManager : MonoBehaviour
         pendingReply = null;
     }
 
+    public bool TryCloseDialogue()
+    {
+        if (!IsDialogueOpen) return false;
+        CloseDialogue();
+        return true;
+    }
+
     private void CloseDialogue()
     {
         if (pendingReply != null)
@@ -266,11 +273,11 @@ public sealed class QuestManager : MonoBehaviour
         }
 
         if (IsDialogueOpen &&
-            (enteredSecondRoom || (Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame) ||
+            (enteredSecondRoom || (!TempleMenu.HandlesEscape && Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame) ||
              (player != null && Vector3.Distance(player.position, transform.position) > interactionDistance)))
             CloseDialogue();
 
-        canvas.enabled = puzzle != null && (!enteredSecondRoom || realOrrin != null) && !IsDialogueOpen &&
+        canvas.enabled = !TempleMenu.IsPaused && puzzle != null && (!enteredSecondRoom || realOrrin != null) && !IsDialogueOpen &&
             (dialoguePanel == null || !dialoguePanel.activeInHierarchy) &&
             (victoryPanel == null || !victoryPanel.activeInHierarchy);
         if (!canvas.enabled)

@@ -25,7 +25,7 @@ public class PlayerMovement : MonoBehaviour
 
     private void Update()
     {
-        if (Keyboard.current == null)
+        if (TempleMenu.BlocksGameplay || Keyboard.current == null)
             return;
 
         Vector2 input = Vector2.zero;

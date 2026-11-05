@@ -8,6 +8,7 @@ public class FinalPortalTrigger : MonoBehaviour
     [SerializeField] private DoorController orrinDoor;
 
     private bool completed;
+    public bool IsVictoryVisible => completed || (victoryPanel != null && victoryPanel.activeInHierarchy);
 
     private void OnTriggerEnter(Collider other)
     {

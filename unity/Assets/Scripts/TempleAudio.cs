@@ -66,7 +66,7 @@ public sealed class TempleAudio : MonoBehaviour
     private void Update()
     {
         bool dialogue = playerInteraction != null && playerInteraction.IsDialogueOpen;
-        float level = won ? 0f : musicVolume * (dialogue ? .45f : 1f);
+        float level = won ? 0f : musicVolume * (dialogue || TempleMenu.IsPaused ? .45f : 1f);
         music.volume = Mathf.MoveTowards(music.volume, level, .28f * Time.unscaledDeltaTime);
         if (won && music.volume == 0f && music.isPlaying)
             music.Stop();

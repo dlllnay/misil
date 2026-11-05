@@ -64,7 +64,7 @@ namespace MuhurluKapi.Interaction
             }
 
             if (Keyboard.current == null ||
-                !Keyboard.current.eKey.wasPressedThisFrame || IsActivated || Time.timeScale == 0f)
+                !Keyboard.current.eKey.wasPressedThisFrame || IsActivated || TempleMenu.BlocksGameplay || Time.timeScale == 0f)
                 return;
 
             if ((orrinDialogue != null && orrinDialogue.isActiveAndEnabled) ||

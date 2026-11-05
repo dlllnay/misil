@@ -17,7 +17,7 @@ public class CompanionSealCommand : MonoBehaviour
 
     private void Update()
     {
-        if (Keyboard.current == null ||
+        if (TempleMenu.BlocksGameplay || Keyboard.current == null ||
             !Keyboard.current.eKey.wasPressedThisFrame)
             return;
 

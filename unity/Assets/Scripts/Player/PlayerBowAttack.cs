@@ -24,7 +24,7 @@ public class PlayerBowAttack : MonoBehaviour
 
     private void Update()
     {
-        if (Mouse.current == null || (interaction != null && interaction.IsDialogueOpen)) return;
+        if (TempleMenu.BlocksGameplay || Mouse.current == null || (interaction != null && interaction.IsDialogueOpen)) return;
 
         bool shiftPressed =
             Keyboard.current != null &&

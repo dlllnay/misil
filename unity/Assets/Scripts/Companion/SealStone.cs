@@ -25,7 +25,7 @@ public class SealStone : MonoBehaviour
 
     private void Update()
     {
-        if (_activated ||
+        if (TempleMenu.BlocksGameplay || _activated ||
             player == null ||
             Keyboard.current == null)
             return;

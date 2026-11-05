@@ -26,14 +26,24 @@ namespace MuhurluKapi.Interaction
                 input.isFocused;
         }
 
+        public bool TryCloseDialogue()
+        {
+            if (dialoguePanel != null && dialoguePanel.activeInHierarchy)
+            {
+                dialoguePanel.SetActive(false);
+                return true;
+            }
+            return projection != null && projection.TryCloseDialogue();
+        }
+
         private void Update()
         {
             var keyboard = Keyboard.current;
-            if (keyboard == null)
+            if (keyboard == null || TempleMenu.BlocksGameplay)
                 return;
             bool focused = (playerInput != null && playerInput.isFocused) || IsTextInputFocused();
             if (dialoguePanel != null && dialoguePanel.activeSelf &&
-                (keyboard.escapeKey.wasPressedThisFrame || (keyboard.fKey.wasPressedThisFrame && !focused)))
+                ((!TempleMenu.HandlesEscape && keyboard.escapeKey.wasPressedThisFrame) || (keyboard.fKey.wasPressedThisFrame && !focused)))
             {
                 dialoguePanel.SetActive(false);
                 return;
