@@ -145,6 +145,7 @@ public sealed class QuestManager : MonoBehaviour
         }
     }
 
+    public bool EnteredSecondRoom => enteredSecondRoom;
     public bool HasRequiredDiamonds => CollectedDiamondCount >= RequiredDiamonds;
 
     public bool TryCollectDiamond(CharacterController playerBody)

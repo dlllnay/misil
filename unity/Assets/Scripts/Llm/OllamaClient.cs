@@ -52,44 +52,52 @@ namespace MuhurluKapi.Llm
             List<ChatMessage> messages,
             CancellationToken cancellationToken = default)
         {
-            var requestData = new
+            return await RequestAsync(messages, new
             {
-                model = modelName,
-                messages = messages,
-                stream = false,
-                // Per-request settings also apply when the installed model was
-                // created from an older Modelfile. No model rebuild is needed.
-                options = new { temperature = 0.2, num_predict = 192 },
-                format = new
+                type = "object",
+                properties = new
                 {
-                    type = "object",
-                    properties = new
-                    {
-                        dialogue = new
-                        {
-                            type = "string"
-                        },
-                        action = new
-                        {
-                            type = "string",
-                            @enum = new[] { "none", "open_door" }
-                        },
-                        trust_delta = new
-                        {
-                            type = "integer",
-                            minimum = -1,
-                            maximum = 1
-                        }
-                    },
-                    required = new[]
-                    {
-                        "dialogue",
-                        "action",
-                        "trust_delta"
-                    },
-                    additionalProperties = false
-                }
-            };
+                    dialogue = new { type = "string" },
+                    action = new { type = "string", @enum = new[] { "none", "open_door" } },
+                    trust_delta = new { type = "integer", minimum = -1, maximum = 1 }
+                },
+                required = new[] { "dialogue", "action", "trust_delta" },
+                additionalProperties = false
+            }, new { temperature = 0.45, num_predict = 192, num_ctx = 4096, repeat_penalty = 1.12 },
+                cancellationToken);
+        }
+
+        internal async Task<bool> AssessTrustThemeAsync(string rubric, string message, CancellationToken cancellationToken)
+        {
+            string reply = await RequestAsync(new List<ChatMessage>
+            {
+                new ChatMessage { role = "system", content = rubric +
+                    " Return JSON." },
+                new ChatMessage { role = "user", content = message }
+            }, new
+            {
+                type = "object",
+                properties = new { matches = new { type = "boolean" } },
+                required = new[] { "matches" },
+                additionalProperties = false
+            }, new { temperature = 0, num_predict = 24 }, cancellationToken);
+
+            using var document = JsonDocument.Parse(reply);
+            if (document.RootElement.ValueKind != JsonValueKind.Object)
+                throw new JsonException("Güven değerlendirmesi bir JSON nesnesi olmalı.");
+            var fields = document.RootElement.EnumerateObject();
+            if (!fields.MoveNext() || fields.Current.Name != "matches" ||
+                fields.Current.Value.ValueKind is not (JsonValueKind.True or JsonValueKind.False))
+                throw new JsonException("Güven değerlendirmesi geçersiz.");
+            bool matches = fields.Current.Value.GetBoolean();
+            if (fields.MoveNext()) throw new JsonException("Güven değerlendirmesinde fazladan alan var.");
+            return matches;
+        }
+
+        private async Task<string> RequestAsync(List<ChatMessage> messages, object format, object options,
+            CancellationToken cancellationToken)
+        {
+            var requestData = new { model = modelName, messages, stream = false, options, format };
 
             string json = JsonSerializer.Serialize(requestData);
 
@@ -138,23 +146,28 @@ namespace MuhurluKapi.Llm
             {
                 string responseText = await GenerateChatResponseAsync(
                     requestMessages, cancellationToken);
-                NpcResponse npcResponse = JsonSerializer.Deserialize<NpcResponse>(responseText);
-                if (npcResponse == null || !npcResponse.IsValid())
-                    throw new JsonException("NPC yanıtı geçersiz: dialogue, action veya trust_delta hatalı.");
+                NpcResponse npcResponse = NpcResponse.Parse(responseText);
 
-                if (!UsesAssistantVoice(npcResponse.Dialogue))
+                if (!UsesAssistantVoice(npcResponse.Dialogue) &&
+                    (messages.Count == 0 || !string.Equals(npcResponse.Dialogue.Trim(),
+                        messages[messages.Count - 1].content.Trim(), StringComparison.OrdinalIgnoreCase)) && npcResponse.Dialogue.IndexOfAny(new[] { '{', '}' }) < 0)
                     return npcResponse;
 
                 // Reject this entire draft before any trust or door change.
                 // The replacement must also come from the real local model.
-                requestMessages.Insert(Math.Max(0, requestMessages.Count - 1), new ChatMessage
-                {
-                    role = "system",
-                    content = "Correction: your previous draft used customer-service language. " +
-                        "Answer the traveller's original message again as Orrin, the stern ancient gatekeeper. " +
-                        "Use one short Turkish sentence about the gate, the seal, or the traveller's intent. " +
-                        "Do not offer assistance or introduce yourself. Keep the same JSON schema and game-state rules."
-                });
+                const string correction =
+                    "\nSon oyuncu mesajına muhafız Orrin olarak yeniden cevap ver. " +
+                    "Hazır yardım teklifleri ve asistan kalıpları kullanma. dialogue alanına JSON koyma. " +
+                    "Orrin olarak oyuncuya tek kısa Türkçe cümle söyle. Puan, görev arayüzü veya oyuncunun yerine konuşma yok. Gerçek salon durumunu ve JSON alanlarını koru.";
+                // Qwen's chat template has one system slot before the dialogue.
+                if (requestMessages.Count > 0 && requestMessages[0].role == "system")
+                    requestMessages[0] = new ChatMessage
+                    {
+                        role = "system",
+                        content = requestMessages[0].content + correction
+                    };
+                else
+                    requestMessages.Insert(0, new ChatMessage { role = "system", content = correction });
             }
 
             throw new JsonException("Orrin yanıtı karakter denetimini geçemedi; asistan üslubu reddedildi.");
@@ -165,7 +178,8 @@ namespace MuhurluKapi.Llm
             string text = dialogue.ToLowerInvariant().Replace('ı', 'i')
                 .Replace('ş', 's').Replace('ğ', 'g').Replace('ü', 'u')
                 .Replace('ö', 'o').Replace('ç', 'c');
-            return text.Contains("yardimci ol") || text.Contains("yardim edebil") ||
+            return text.Contains("niyetle buradayim") || text.Contains("neden buradayim") ||
+                text.Contains("guvenimi 3 yaptim") || text.Contains("guveninizi arttirdiginizi") || text.Contains("simdi size ne yapmaniz") || text.Contains("guveni arttirdiginizi") || text.Contains("yardimci ol") || text.Contains("yardim edebil") ||
                 text.Contains("sorularinizi yanit") || text.Contains("merhaba, ben orrin") ||
                 text.Contains("yapay zeka") || text.Contains("asistan") ||
                 text.Contains("how can i") || text.Contains("help you");
@@ -209,16 +223,7 @@ Oyuncunun mesajı:
 
             Debug.Log("Ollama ham JSON: " + responseText);
 
-            NpcResponse npcResponse =
-                JsonSerializer.Deserialize<NpcResponse>(responseText);
-
-            if (npcResponse == null || !npcResponse.IsValid())
-            {
-                throw new JsonException(
-                    "NPC yanıtı geçersiz: dialogue, action veya trust_delta hatalı.");
-            }
-
-            return npcResponse;
+            return NpcResponse.Parse(responseText);
         }
     }
 }
