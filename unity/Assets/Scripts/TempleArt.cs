@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
+using TMPro;
+using MuhurluKapi.Interaction;
 
 // Scene dressing only. Generated meshes have no physics or navigation components.
 public sealed class TempleArt : MonoBehaviour
@@ -17,6 +19,8 @@ public sealed class TempleArt : MonoBehaviour
     [SerializeField] private GameObject firstHall;
     [SerializeField] private GameObject secondHall;
     [SerializeField] private CrystalTarget[] targetCrystals;
+    [SerializeField] private CrystalDoorPuzzle crystalPuzzle;
+    [SerializeField] private TMP_FontAsset inscriptionFont;
 
     private readonly List<Object> assets = new();
     private readonly List<GameObject> roots = new();
@@ -43,9 +47,20 @@ public sealed class TempleArt : MonoBehaviour
         stone.SetTexture("_BaseMap", MakeFlagstone());
         DressHall(firstHall, stone, lining, gold, violet, teal);
         DressHall(secondHall, stone, lining, gold, violet, teal);
+        DressInnerHall(stone, gold, violet, teal);
+        var tablet = MaterialFor(new Color(.66f, .59f, .72f), new Color(.05f, .04f, .064f), .23f);
+        tablet.SetTexture("_BaseMap", stone.GetTexture("_BaseMap"));
         if (targetCrystals != null)
             foreach (var target in targetCrystals)
-                if (target != null) MarkTargetCrystal(target, gold, teal);
+                if (target != null) MarkTargetCrystal(target, gold);
+        if (crystalPuzzle != null)
+        {
+            var sites = new[] { new Vector3(-10f, 1.8f, -4f), new Vector3(10f, 1.8f, -4f),
+                new Vector3(0, 1.8f, 10.8f) };
+            for (int i = 0; i < sites.Length; i++)
+                Inscription(sites[i], Vector3.zero, "Kadim Yazıt", crystalPuzzle.Clue(i),
+                    tablet, gold, i == 1 ? teal : violet);
+        }
 
         if (orrin != null)
         {
@@ -131,6 +146,8 @@ public sealed class TempleArt : MonoBehaviour
         }
         if (orrinSeal != null)
             DressSeal(stone, gold, violet);
+        if (orrinSeal is OrrinSealStone trial)
+            DressTrial(trial, stone, tablet, gold, violet);
 
         var accents = Root(transform, "Tapınak • Vurgu ışıkları", Vector3.zero);
         Surface(accents, stone, accents.InverseTransformPoint(new Vector3(-.38f, .531f, -13.514f)),
@@ -243,8 +260,10 @@ public sealed class TempleArt : MonoBehaviour
         Ring(orbit, sealGemMaterial, Vector3.zero, .47f, .017f);
     }
 
-    private void MarkTargetCrystal(CrystalTarget target, Material gold, Material teal)
+    private void MarkTargetCrystal(CrystalTarget target, Material gold)
     {
+        Color identity = target.Rune.Color();
+        var glow = MaterialFor(identity, identity * .88f, .66f);
         foreach (var renderer in target.GetComponentsInChildren<MeshRenderer>())
         {
             if (!renderer.enabled) continue;
@@ -255,10 +274,10 @@ public sealed class TempleArt : MonoBehaviour
                 if (material.HasProperty("_BaseColor"))
                 {
                     var original = material.GetColor("_BaseColor");
-                    material.SetColor("_BaseColor", new Color(.17f, .94f, .90f, original.a));
+                    material.SetColor("_BaseColor", new Color(identity.r, identity.g, identity.b, original.a));
                 }
                 if (material.HasProperty("_EmissionColor"))
-                    material.SetColor("_EmissionColor", new Color(.065f, .92f, 1.20f));
+                    material.SetColor("_EmissionColor", identity * .80f);
             }
         }
 
@@ -269,14 +288,172 @@ public sealed class TempleArt : MonoBehaviour
         var direction = Vector3.ProjectOnPlane(center - transform.position, Vector3.up);
         if (direction.sqrMagnitude > .01f)
             halo.rotation = Quaternion.LookRotation(direction);
-        Ring(halo, teal, Vector3.zero, radius, .025f);
+        Ring(halo, glow, Vector3.zero, radius, .025f);
         Ring(halo, gold, Vector3.zero, radius * 1.12f, .017f);
-        for (int i = 0; i < 4; i++)
+        int markCount = (int)target.Rune + 3;
+        for (int i = 0; i < markCount; i++)
         {
-            var axis = Quaternion.Euler(0, 0, i * 90f) * Vector3.up;
-            Rod(halo, teal, axis * (radius * 1.16f), axis * (radius * 1.31f), .023f);
+            var axis = Quaternion.Euler(0, 0, i * 360f / markCount) * Vector3.up;
+            Rod(halo, glow, axis * (radius * 1.16f), axis * (radius * 1.31f), .023f);
         }
         targetHalos.Add((target, halo));
+    }
+
+    private void DressTrial(OrrinSealStone trial, Material stone, Material tablet, Material gold, Material violet)
+    {
+        var origin = trial.transform.position;
+        Inscription(origin + new Vector3(0, 1.72f, -.35f), origin + Vector3.forward * 5f,
+            "Üç Nefesin Yemini", "Önce derinliklerin sessiz nefesi uyanır.\n" +
+            "Ardından gecenin sakladığı kudret yükselir.\nSonunda ilk ışık, karanlığın mührünü kırar.",
+            tablet, gold, violet, true);
+        var altar = Facing(new Vector3(origin.x, .552f, origin.z), origin, "Mühür • Zemin işlemesi");
+        Ring(altar, gold, Vector3.zero, 1.24f, .026f);
+        Ring(altar, violet, Vector3.up * .006f, 1.12f, .018f);
+        for (int i = 0; i < 3; i++)
+        {
+            var rune = (TempleRune)i;
+            Vector3 position = trial.RunePosition(rune);
+            var node = Root(transform, "Mühür rünü • " + rune.Label(), transform.InverseTransformPoint(position));
+            var color = rune.Color();
+            var glow = MaterialFor(color, color * .72f, .64f);
+            Profile(node, stone, Vector3.zero, 1f, new(.44f, -.63f), new(.44f, -.49f),
+                new(.32f, -.45f), new(.28f, -.12f), new(0, -.12f));
+            var emblem = Child(node, "Rün işareti", Vector3.up * .18f);
+            var direction = Vector3.ProjectOnPlane(position - origin, Vector3.up);
+            emblem.rotation = Quaternion.LookRotation(direction);
+            Ring(emblem, gold, Vector3.zero, .36f, .018f);
+            RuneRelief(emblem, rune, glow);
+            var prompt = Facing(position + Vector3.up * .68f, origin, "Rün • Etkileşim");
+            TabletText(prompt, "E", 0, new Vector2(.48f, .36f), 2.4f, color, FontStyles.Bold);
+        }
+    }
+
+    private void RuneRelief(Transform emblem, TempleRune rune, Material glow)
+    {
+        if (rune == TempleRune.Turquoise)
+        {
+            for (int row = -1; row <= 1; row++)
+            for (int i = 0; i < 8; i++)
+            {
+                Vector3 Wave(int step) => new Vector3(-.23f + step * .0575f,
+                    row * .11f + Mathf.Sin(step * Mathf.PI / 4f) * .032f, 0);
+                Rod(emblem, glow, Wave(i), Wave(i + 1), .016f);
+            }
+        }
+        else if (rune == TempleRune.Purple)
+        {
+            for (int i = 0; i < 12; i++)
+            {
+                Vector3 Arc(int step, float width)
+                {
+                    float angle = Mathf.PI * step / 12f;
+                    return new Vector3(.13f - Mathf.Sin(angle) * width, Mathf.Cos(angle) * .24f, 0);
+                }
+                Rod(emblem, glow, Arc(i, .33f), Arc(i + 1, .33f), .018f);
+                Rod(emblem, glow, Arc(i, .18f), Arc(i + 1, .18f), .014f);
+            }
+        }
+        else
+        {
+            Rod(emblem, glow, new Vector3(-.24f, -.11f), new Vector3(.24f, -.11f), .017f);
+            for (int i = 0; i <= 6; i++)
+            {
+                float angle = i * Mathf.PI / 6f;
+                Vector3 ray = new Vector3(Mathf.Cos(angle), Mathf.Sin(angle), 0);
+                Vector3 horizon = Vector3.down * .11f;
+                Rod(emblem, glow, horizon + ray * .14f, horizon + ray * .23f, .016f);
+            }
+        }
+    }
+
+    private Transform Facing(Vector3 position, Vector3 reader, string name)
+    {
+        var node = Root(transform, name, transform.InverseTransformPoint(position));
+        Vector3 direction = Vector3.ProjectOnPlane(position - reader, Vector3.up);
+        if (direction.sqrMagnitude > .01f) node.rotation = Quaternion.LookRotation(direction);
+        return node;
+    }
+
+    private void Inscription(Vector3 position, Vector3 reader, string title, string body,
+        Material stone, Material gold, Material glow, bool tall = false)
+    {
+        var board = Facing(position, reader, "Taş tablet • " + title);
+        float width = tall ? 2.26f : 1.73f;
+        float height = tall ? .82f : .61f;
+        Vector3 u = Vector3.left * width, v = Vector3.up * height;
+        Surface(board, stone, Vector3.forward * .03f, u, v, 1f);
+        Surface(board, stone, Vector3.forward * .20f, -u, v, 1f);
+        Surface(board, stone, Vector3.up * height + Vector3.forward * .115f,
+            u, Vector3.forward * .085f, 1f);
+        for (int side = -1; side <= 1; side += 2)
+        {
+            Surface(board, stone, new Vector3(side * width, 0, .115f),
+                Vector3.forward * (-side * .085f), v, 1f);
+            float x = side * (width - .10f), y = side * (height - .09f);
+            Rod(board, gold, new Vector3(-x, y, .008f), new Vector3(x, y, .008f), .016f);
+            Rod(board, gold, new Vector3(x, -y, .008f), new Vector3(x, y, .008f), .016f);
+            Sigil(Child(board, "Köşe işlemesi", new Vector3(x - side * .18f, height - .20f, -.025f)),
+                gold, glow, .087f);
+        }
+        TabletText(board, title, height - .24f, new Vector2(width * 2f - .72f, .39f),
+            3.05f, new Color(1f, .82f, .48f), FontStyles.Bold | FontStyles.Italic).characterSpacing = 4f;
+        Rod(board, gold, new Vector3(-width * .69f, height - .39f, .005f),
+            new Vector3(width * .69f, height - .39f, .005f), .008f);
+        TabletText(board, body, -.17f, new Vector2(width * 2f - .43f, height * 2f - .50f),
+            2.7f, new Color(.96f, .92f, .83f), FontStyles.Normal);
+    }
+
+    private TextMeshPro TabletText(Transform parent, string value, float y, Vector2 bounds,
+        float size, Color color, FontStyles style)
+    {
+        var text = Child(parent, "Taşa işlenen metin", new Vector3(0, y, -.022f))
+            .gameObject.AddComponent<TextMeshPro>();
+        if (inscriptionFont != null) text.font = inscriptionFont;
+        text.text = value;
+        text.color = color;
+        text.fontStyle = style;
+        text.fontSize = size;
+        text.enableAutoSizing = true;
+        text.fontSizeMin = size * .78f;
+        text.fontSizeMax = size;
+        text.alignment = TextAlignmentOptions.Center;
+        text.rectTransform.sizeDelta = bounds;
+        text.overflowMode = TextOverflowModes.Truncate;
+        text.richText = false;
+        return text;
+    }
+
+    private void DressInnerHall(Material stone, Material gold, Material violet, Material teal)
+    {
+        if (secondHall == null) return;
+        var decor = Root(transform, "İç salon • Kadim mimari", Vector3.zero);
+        foreach (float x in new[] { -12.7f, 11.15f })
+        foreach (float z in new[] { -16.1f, -22.6f, -28.9f })
+        {
+            float inward = x < 0 ? 1 : -1;
+            var pier = Child(decor, "Kırık sütun ve kristal kaidesi",
+                decor.InverseTransformPoint(new Vector3(x, .54f, z)));
+            float height = z > -20f ? 2.35f : z > -25f ? 1.55f : 2.10f;
+            Profile(pier, stone, Vector3.zero, .86f, new(.68f, 0), new(.68f, .15f),
+                new(.54f, .22f), new(.42f, .36f), new(.34f, height - .17f),
+                new(.29f, height), new(0, height - .09f));
+            Profile(pier, gold, Vector3.zero, .86f, new(.44f, .32f), new(.43f, .38f));
+            Gem(pier, teal, new Vector3(inward * .52f, .43f, .35f), .15f, .38f);
+            Gem(pier, teal, new Vector3(inward * .68f, .29f, .06f), .10f, .24f);
+            var relief = Child(pier, "Duvar kabartması", new Vector3(-inward * .36f, 2.73f, 0));
+            relief.rotation = Quaternion.Euler(0, -inward * 90f, 0);
+            Sigil(relief, gold, violet, .44f);
+            Gem(relief, violet, new Vector3(0, -.63f, -.19f), .11f, .25f);
+        }
+        var inlay = Child(decor, "İç salon • Taban rünleri",
+            decor.InverseTransformPoint(new Vector3(-.76f, .552f, -25.4f)));
+        Ring(inlay, gold, Vector3.zero, 1.75f, .025f);
+        Ring(inlay, violet, Vector3.up * .006f, 1.61f, .014f);
+        for (int i = 0; i < 8; i++)
+        {
+            Vector3 radial = Quaternion.Euler(0, i * 45f, 0) * Vector3.forward;
+            Rod(inlay, gold, radial * 1.41f, radial * 1.58f, .016f);
+        }
     }
 
     private void DressHall(GameObject hall, Material stone, Material cloth, Material gold,

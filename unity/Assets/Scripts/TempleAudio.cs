@@ -4,7 +4,7 @@ using MuhurluKapi.Interaction;
 
 public enum TempleSound
 {
-    Arrow, Crystal, Diamond, NyraSeal, OrrinSeal, FirstGate, OrrinGate, Victory, Footstep
+    Arrow, Crystal, Diamond, NyraSeal, OrrinSeal, FirstGate, OrrinGate, Victory, Footstep, PuzzleError
 }
 
 public sealed class TempleAudio : MonoBehaviour

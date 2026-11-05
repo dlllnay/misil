@@ -13,16 +13,18 @@ public class PlayerBowAttack : MonoBehaviour
     [SerializeField] private float aimAssistRadius = 0.65f;
 
     private Animator animator;
+    private MuhurluKapi.Interaction.PlayerInteraction interaction;
     private bool isAttacking;
 
     private void Awake()
     {
         animator = GetComponent<Animator>();
+        interaction = GetComponent<MuhurluKapi.Interaction.PlayerInteraction>();
     }
 
     private void Update()
     {
-        if (Mouse.current == null) return;
+        if (Mouse.current == null || (interaction != null && interaction.IsDialogueOpen)) return;
 
         bool shiftPressed =
             Keyboard.current != null &&
@@ -52,6 +54,12 @@ public class PlayerBowAttack : MonoBehaviour
         animator.SetTrigger("Attack");
 
         yield return new WaitForSeconds(shootDelay);
+
+        if (interaction != null && interaction.IsDialogueOpen)
+        {
+            isAttacking = false;
+            yield break;
+        }
 
         Camera cam = Camera.main;
 

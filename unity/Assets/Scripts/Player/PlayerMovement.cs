@@ -14,6 +14,7 @@ public class PlayerMovement : MonoBehaviour
     private Animator animator;
     private PlayerInteraction interaction;
     private float verticalVelocity;
+    private float stepDistance;
 
     private void Awake()
     {
@@ -101,7 +102,23 @@ public class PlayerMovement : MonoBehaviour
             moveDirection * moveSpeed +
             Vector3.up * verticalVelocity;
 
+        Vector3 beforeMove = transform.position;
         controller.Move(velocity * Time.deltaTime);
+
+        float traveled = Vector3.ProjectOnPlane(transform.position - beforeMove, Vector3.up).magnitude;
+        if (controller.isGrounded && input.sqrMagnitude > 0f && traveled > .001f)
+        {
+            stepDistance += traveled;
+            if (stepDistance >= 1.35f)
+            {
+                stepDistance %= 1.35f;
+                TempleAudio.Play(TempleSound.Footstep, transform.position);
+            }
+        }
+        else
+        {
+            stepDistance = 0f;
+        }
 
         if (animator != null)
         {

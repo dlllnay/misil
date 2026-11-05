@@ -23,6 +23,7 @@ public sealed class QuestManager : MonoBehaviour
     [SerializeField] private float interactionDistance = 3.5f;
 
     private bool metProjection;
+    private int hintLevel;
     private bool heardNyraInstruction;
     private bool enteredSecondRoom;
     private GameObject projectionPanel;
@@ -220,8 +221,11 @@ public sealed class QuestManager : MonoBehaviour
             heardNyraInstruction = true;
             answer = "Güzel iş çıkardın. Şimdi Nyra'yı yükselen büyülü mührün üzerine yönlendir. Kapı açıldığında ikinci salonda benimle yeniden buluş.";
         }
+        else if (message.IndexOf("ipucu", System.StringComparison.OrdinalIgnoreCase) >= 0 ||
+                 message.IndexOf("sıra", System.StringComparison.OrdinalIgnoreCase) >= 0)
+            answer = puzzle.Hint(hintLevel = Mathf.Min(3, hintLevel + 1));
         else
-            answer = "Önce bu salondaki üç kadim kristali oklarınla etkinleştirmelisin. Sonra tekrar yanıma gel, yolcu.";
+            answer = "Üç kadim kristali doğru sırayla okla etkinleştir. Üç yazıtı ara. İstersen bana ipucu sor.";
 
         metProjection = true;
         dialogueView.Complete(answer);
@@ -272,8 +276,12 @@ public sealed class QuestManager : MonoBehaviour
         if (!canvas.enabled)
             return;
 
-        label.text = enteredSecondRoom ? SecondRoomObjective() : Objective();
-        panel.sizeDelta = new Vector2(510, label.text.Contains("\n") ? 94 : 72);
+        string objective = enteredSecondRoom ? SecondRoomObjective() : Objective();
+        if (label.text != objective)
+        {
+            label.text = objective;
+            panel.sizeDelta = new Vector2(510, Mathf.Max(72, 43 + label.GetPreferredValues(objective, 484, 0).y));
+        }
     }
 
     private string SecondRoomObjective()
@@ -281,10 +289,14 @@ public sealed class QuestManager : MonoBehaviour
         if (realOrrin.IsDoorOpen) return "Final mührüne ilerle";
         if (!realOrrin.IsOrrinConvinced) return $"Orrin'in güvenini kazan: {realOrrin.TrustPoints}/3";
         if (orrinSeal != null && orrinSeal.IsActivated) return "Orrin'e dön ve kapıyı açmasını iste";
+        if (orrinSeal != null && orrinSeal.TrialRunning)
+            return $"Mühür sınavı: {orrinSeal.SecondsRemaining} sn\nRün dizilimi: {orrinSeal.RuneProgress}/3 • Yakında E";
+        if (orrinSeal != null && !string.IsNullOrEmpty(orrinSeal.TrialFeedback))
+            return orrinSeal.TrialFeedback;
         string progress = $"Kadim elmasları topla: {CollectedDiamondCount}/{RequiredDiamonds}";
         if (!HasRequiredDiamonds) return progress;
         return progress + (orrinSeal != null && orrinSeal.IsPlayerInReach
-            ? "\nE - Mühür taşını etkinleştir"
+            ? "\nE - 45 saniyelik mühür sınavını başlat"
             : "\nParlayan mühür taşına yaklaş");
     }
 
@@ -295,8 +307,10 @@ public sealed class QuestManager : MonoBehaviour
         int count = puzzle.ActivatedCrystalCount;
         if (count == 3)
             return heardNyraInstruction ? "Nyra'yı mühre yönlendir" : "Orrin'e dön ve sonraki görevini öğren (3/3)";
-        if (!metProjection) return "Orrin'e yaklaş ve görevini öğren";
-        return $"Büyülü kristalleri etkinleştir: {count}/3";
+        if (!metProjection && count == 0 && puzzle.MistakesLeft == 3 &&
+            string.IsNullOrEmpty(puzzle.ActiveFeedback)) return "Orrin'e yaklaş ve görevini öğren";
+        string progress = $"Kristal Dizilimi: {count}/3\nHata Hakkı: {puzzle.MistakesLeft}/3";
+        return string.IsNullOrEmpty(puzzle.ActiveFeedback) ? progress : progress + "\n" + puzzle.ActiveFeedback;
     }
 
     private void OnDestroy()

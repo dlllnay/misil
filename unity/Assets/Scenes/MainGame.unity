@@ -10159,7 +10159,7 @@ Transform:
   m_GameObject: {fileID: 2112000010}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -6.75, y: 1.05, z: -20.25}
+  m_LocalPosition: {x: -10.8, y: 1.05, z: -17.8}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -10262,7 +10262,7 @@ Transform:
   m_GameObject: {fileID: 2112000020}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 5.4, y: 1.05, z: -18.225}
+  m_LocalPosition: {x: 9.6, y: 1.05, z: -25.9}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -10365,7 +10365,7 @@ Transform:
   m_GameObject: {fileID: 2112000030}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -5.4, y: 1.05, z: -27.675}
+  m_LocalPosition: {x: -10.4, y: 1.05, z: -28.4}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -10457,6 +10457,8 @@ MonoBehaviour:
   rangerVisual: {fileID: 1799073726}
   firstHall: {fileID: 1141590821}
   secondHall: {fileID: 1719354013}
+  crystalPuzzle: {fileID: 1301477726}
+  inscriptionFont: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   targetCrystals:
   - {fileID: 2018576902}
   - {fileID: 1325103675}

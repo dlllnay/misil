@@ -39,7 +39,7 @@ public class SealStone : MonoBehaviour
             Activate();
     }
 
-    public void Activate()
+    public virtual void Activate()
     {
         if (_activated)
             return;

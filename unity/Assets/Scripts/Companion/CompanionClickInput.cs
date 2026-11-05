@@ -8,16 +8,19 @@ public class CompanionClickInput : MonoBehaviour
 {
     private CompanionController _controller;
     private Camera _camera;
+    private MuhurluKapi.Interaction.PlayerInteraction _interaction;
 
     private void Awake()
     {
         _controller = GetComponent<CompanionController>();
         _camera = Camera.main;
+        _interaction = FindAnyObjectByType<MuhurluKapi.Interaction.PlayerInteraction>();
     }
 
     private void Update()
     {
-        if (Mouse.current == null || Keyboard.current == null)
+        if (Mouse.current == null || Keyboard.current == null ||
+            (_interaction != null && _interaction.IsDialogueOpen))
             return;
 
         bool shiftPressed =
