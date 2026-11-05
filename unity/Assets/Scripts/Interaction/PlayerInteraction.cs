@@ -2,6 +2,7 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 using TMPro;
+using UnityEngine.EventSystems;
 
 namespace MuhurluKapi.Interaction
 {
@@ -11,36 +12,50 @@ namespace MuhurluKapi.Interaction
         [SerializeField] private float interactionDistance = 3.5f;
         [SerializeField] private GameObject dialoguePanel;
         [SerializeField] private TMP_InputField playerInput;
+        [SerializeField] private QuestManager projection;
+
+        public bool IsDialogueOpen =>
+            (dialoguePanel != null && dialoguePanel.activeInHierarchy) ||
+            (projection != null && projection.IsDialogueOpen);
+
+        public static bool IsTextInputFocused()
+        {
+            var selected = EventSystem.current?.currentSelectedGameObject;
+            return selected != null &&
+                selected.GetComponentInParent<TMP_InputField>() is TMP_InputField input &&
+                input.isFocused;
+        }
 
         private void Update()
         {
-            if (orrin == null || Keyboard.current == null)
+            var keyboard = Keyboard.current;
+            if (keyboard == null)
+                return;
+            bool focused = (playerInput != null && playerInput.isFocused) || IsTextInputFocused();
+            if (dialoguePanel != null && dialoguePanel.activeSelf &&
+                (keyboard.escapeKey.wasPressedThisFrame || (keyboard.fKey.wasPressedThisFrame && !focused)))
             {
+                dialoguePanel.SetActive(false);
                 return;
             }
-            if (playerInput != null && playerInput.isFocused)
-            {
+            if (focused || !keyboard.fKey.wasPressedThisFrame)
                 return;
-            }
+
+            if (projection != null && projection.TryInteract(transform.position))
+                return;
+            if (orrin == null)
+                return;
 
             float distance = Vector3.Distance(
                 transform.position,
                 orrin.position
             );
 
-            if (distance <= interactionDistance &&
-                Keyboard.current.fKey.wasPressedThisFrame)
+            if (distance <= interactionDistance)
             {
                 if (dialoguePanel != null)
                 {
-                    bool isOpen = dialoguePanel.activeSelf;
-                    dialoguePanel.SetActive(!isOpen);
-
-                    Debug.Log(
-                        dialoguePanel.activeSelf
-                            ? "Orrin konusma paneli acildi!"
-                            : "Orrin konusma paneli kapandi!"
-                    );
+                    dialoguePanel.SetActive(true);
                 }
             }
         }

@@ -2,6 +2,7 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.AI;
+using MuhurluKapi.Interaction;
 
 [RequireComponent(typeof(CompanionController))]
 public class NyraFollowPlayer : MonoBehaviour
@@ -13,6 +14,7 @@ public class NyraFollowPlayer : MonoBehaviour
 
     private CompanionController controller;
     private NavMeshAgent agent;
+    private PlayerInteraction playerInteraction;
 
     private bool isFollowing = true;
     private float nextUpdate;
@@ -23,12 +25,16 @@ public class NyraFollowPlayer : MonoBehaviour
     {
         controller = GetComponent<CompanionController>();
         agent = GetComponent<NavMeshAgent>();
+        if (player != null)
+            playerInteraction = player.GetComponent<PlayerInteraction>();
     }
 
     private void Update()
     {
         if (Keyboard.current != null &&
-            Keyboard.current.fKey.wasPressedThisFrame)
+            Keyboard.current.gKey.wasPressedThisFrame &&
+            (playerInteraction == null || !playerInteraction.IsDialogueOpen) &&
+            !PlayerInteraction.IsTextInputFocused())
         {
             isFollowing = !isFollowing;
             hasTarget = false;

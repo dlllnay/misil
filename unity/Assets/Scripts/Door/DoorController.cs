@@ -1,6 +1,7 @@
 
 using UnityEngine;
 using MuhurluKapi.Llm;
+using MuhurluKapi.Interaction;
 
 namespace MuhurluKapi.Door
 {
@@ -16,6 +17,8 @@ namespace MuhurluKapi.Door
         [SerializeField] private GameObject puzzleObstacle;
 
         public bool IsOpen { get; private set; }
+        public bool HasRequiredDiamonds =>
+            !(sealStone is OrrinSealStone orrinSeal) || orrinSeal.HasRequiredDiamonds;
 
         public bool IsPuzzleCompleted
         {
@@ -47,6 +50,12 @@ namespace MuhurluKapi.Door
             if (trustPoints < RequiredTrust)
             {
                 Debug.LogWarning("Kapı açılamaz: Orrin güveni yetersiz!", this);
+                return;
+            }
+
+            if (!HasRequiredDiamonds)
+            {
+                Debug.LogWarning("Kapı açılamaz: Üç kadim elmas henüz toplanmadı.", this);
                 return;
             }
 

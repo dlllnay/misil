@@ -1,6 +1,6 @@
 using UnityEngine;
-using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
+using MuhurluKapi.Dialogue;
 
 namespace MuhurluKapi.Interaction
 {
@@ -9,7 +9,33 @@ namespace MuhurluKapi.Interaction
     public sealed class OrrinSealStone : SealStone
     {
         [SerializeField] private CharacterController interactionPlayer;
+        [SerializeField] private OrrinDialogueUI orrinDialogue;
+        [SerializeField] private QuestManager quest;
         [SerializeField, Min(0.1f)] private float reachDistance = 2.5f;
+
+        public bool HasRequiredDiamonds => quest != null && quest.HasRequiredDiamonds;
+        public bool IsPlayerInReach =>
+            interactionPlayer != null && interactionPlayer.enabled &&
+            interactionPlayer.gameObject.activeInHierarchy &&
+            Vector3.Distance(transform.position, interactionPlayer.ClosestPoint(transform.position)) <= reachDistance;
+
+        private void Awake()
+        {
+            if (!TryGetComponent(out Renderer renderer))
+                return;
+
+            var colors = new MaterialPropertyBlock();
+            colors.SetColor("_BaseColor", new Color(0.38f, 0.12f, 0.74f));
+            colors.SetColor("_EmissionColor", new Color(0.65f, 0.20f, 1.6f));
+            renderer.SetPropertyBlock(colors);
+
+            var glow = gameObject.AddComponent<Light>();
+            glow.type = LightType.Point;
+            glow.color = new Color(0.48f, 0.24f, 1f);
+            glow.range = 3f;
+            glow.intensity = 1.2f;
+            glow.shadows = LightShadows.None;
+        }
 
         // Unity uses this message instead of SealStone's private Update.
         private void Update()
@@ -18,11 +44,8 @@ namespace MuhurluKapi.Interaction
                 !Keyboard.current.eKey.wasPressedThisFrame || IsActivated)
                 return;
 
-            // Typing the letter E in dialogue must not solve the seal.
-            GameObject selected = EventSystem.current != null
-                ? EventSystem.current.currentSelectedGameObject : null;
-            if (selected != null &&
-                selected.GetComponentInParent<TMPro.TMP_InputField>() != null)
+            if ((orrinDialogue != null && orrinDialogue.isActiveAndEnabled) ||
+                (quest != null && quest.IsDialogueOpen) || PlayerInteraction.IsTextInputFocused())
                 return;
 
             if (interactionPlayer == null || !interactionPlayer.enabled ||
@@ -32,17 +55,35 @@ namespace MuhurluKapi.Interaction
                 return;
             }
 
-            // Measure reach from the actual body, not the model's elevated pivot.
-            float distance = Vector3.Distance(transform.position,
-                interactionPlayer.ClosestPoint(transform.position));
-            if (distance > reachDistance)
+            // A nearby diamond can be collected while the stone is still locked.
+            if (quest != null && quest.TryCollectDiamond(interactionPlayer))
+                return;
+
+            if (!IsPlayerInReach)
+                return;
+
+            if (orrinDialogue == null)
             {
-                Debug.Log($"Orrin muhru: tas uzakta ({distance:F2} m / {reachDistance:F2} m).", this);
+                Debug.LogWarning("Orrin mührü etkinleştirilemedi: OrrinDialogueUI bağlantısı eksik.", this);
+                return;
+            }
+
+            // The panel may be closed: read its existing state without requiring
+            // an active UI, and never maintain a separate trust counter here.
+            if (!orrinDialogue.IsOrrinConvinced)
+            {
+                Debug.Log($"Mühür kilitli: Önce Orrin'le konuşup güvenini 3'e çıkar. Mevcut güven: {orrinDialogue.TrustPoints}/3.", this);
+                return;
+            }
+
+            if (!HasRequiredDiamonds)
+            {
+                Debug.Log("Mühür kilitli: Önce üç kadim elması topla.", this);
                 return;
             }
 
             Activate();
-            Debug.Log("Orrin muhru etkin: kapi icin guven ve LLM karari da gerekiyor.", this);
+            Debug.Log("Orrin mührü etkinleşti. Orrin'e geri dön, F ile konuş ve kapıyı açmasını iste.", this);
         }
     }
 }

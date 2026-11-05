@@ -15,6 +15,15 @@ public class CrystalDoorPuzzle : MonoBehaviour
     private Vector3 openPosition;
     private bool opening;
 
+    public int ActivatedCrystalCount =>
+        (crystal1 != null && crystal1.IsActivated ? 1 : 0) +
+        (crystal2 != null && crystal2.IsActivated ? 1 : 0) +
+        (crystal3 != null && crystal3.IsActivated ? 1 : 0);
+
+    public bool IsGateOpen => opening && door != null && !door.gameObject.activeSelf;
+    public bool IsRuneActive => nyraRune != null && nyraRune.IsActivated;
+    public Transform Gate => door;
+
     private void Start()
     {
         if (door == null)

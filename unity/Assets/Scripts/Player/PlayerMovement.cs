@@ -1,6 +1,7 @@
 
 using UnityEngine;
 using UnityEngine.InputSystem;
+using MuhurluKapi.Interaction;
 
 [RequireComponent(typeof(CharacterController))]
 public class PlayerMovement : MonoBehaviour
@@ -11,12 +12,14 @@ public class PlayerMovement : MonoBehaviour
 
     private CharacterController controller;
     private Animator animator;
+    private PlayerInteraction interaction;
     private float verticalVelocity;
 
     private void Awake()
     {
         controller = GetComponent<CharacterController>();
         animator = GetComponent<Animator>();
+        interaction = GetComponent<PlayerInteraction>();
     }
 
     private void Update()
@@ -25,11 +28,14 @@ public class PlayerMovement : MonoBehaviour
             return;
 
         Vector2 input = Vector2.zero;
-
-        if (Keyboard.current.wKey.isPressed) input.y += 1;
-        if (Keyboard.current.sKey.isPressed) input.y -= 1;
-        if (Keyboard.current.aKey.isPressed) input.x -= 1;
-        if (Keyboard.current.dKey.isPressed) input.x += 1;
+        bool dialogueOpen = interaction != null && interaction.IsDialogueOpen;
+        if (!dialogueOpen)
+        {
+            if (Keyboard.current.wKey.isPressed) input.y += 1;
+            if (Keyboard.current.sKey.isPressed) input.y -= 1;
+            if (Keyboard.current.aKey.isPressed) input.x -= 1;
+            if (Keyboard.current.dKey.isPressed) input.x += 1;
+        }
 
         input = Vector2.ClampMagnitude(input, 1f);
 
@@ -59,7 +65,7 @@ public class PlayerMovement : MonoBehaviour
         }
 
 
-        bool isAiming = Mouse.current != null &&
+        bool isAiming = !dialogueOpen && Mouse.current != null &&
                         Mouse.current.rightButton.isPressed;
 
         Vector3 facingDirection = moveDirection;

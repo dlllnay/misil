@@ -8,6 +8,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.InputSystem;
+using UnityEngine.EventSystems;
 using MuhurluKapi.Llm;
 using MuhurluKapi.Door;
 using Stopwatch = System.Diagnostics.Stopwatch;
@@ -35,16 +36,49 @@ namespace MuhurluKapi.Dialogue
         private bool isWaitingForResponse;
         private CancellationTokenSource activeRequest;
         private bool showCancellationMessage;
+        private CursorLockMode previousCursorLock;
+        private bool previousCursorVisibility;
+
+        private TempleDialogueView dialogueView;
+
+        private void Awake()
+        {
+            if (sendButton == null || orrinText == null || playerInput == null ||
+                transform is not RectTransform rect || !TryGetComponent<Image>(out _))
+                return;
+
+            dialogueView = new TempleDialogueView(rect, orrinText.font, playerInput, sendButton,
+                "Orrin", "Kadim Büyücü", () => gameObject.SetActive(false));
+            orrinText.gameObject.SetActive(false);
+        }
 
         private void OnEnable()
         {
+            previousCursorLock = Cursor.lockState;
+            previousCursorVisibility = Cursor.visible;
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
             if (showCancellationMessage && orrinText != null)
+            {
                 orrinText.text = "Önceki istek iptal edildi. Yeniden mesaj gönderebilirsin.";
+                dialogueView?.Notice(orrinText.text);
+            }
             showCancellationMessage = false;
+            dialogueView?.ScrollToLatest();
         }
 
         private void OnDisable()
         {
+            if (playerInput != null)
+                playerInput.DeactivateInputField();
+            var eventSystem = EventSystem.current;
+            if (eventSystem != null && eventSystem.currentSelectedGameObject != null &&
+                eventSystem.currentSelectedGameObject.transform.IsChildOf(transform))
+                eventSystem.SetSelectedGameObject(null);
+            Cursor.lockState = previousCursorLock;
+            Cursor.visible = previousCursorVisibility;
+
+            dialogueView?.Cancel();
             var request = activeRequest;
             activeRequest = null;
             if (request == null)
@@ -85,7 +119,10 @@ namespace MuhurluKapi.Dialogue
         private int trustPoints = 0;
         private const int RequiredTrust = DoorController.RequiredTrust;
 
-        private bool IsOrrinConvinced =>
+        public int TrustPoints => trustPoints;
+        public bool IsDoorOpen => sealedDoor != null && sealedDoor.IsOpen;
+
+        public bool IsOrrinConvinced =>
             trustPoints >= RequiredTrust;
 
 
@@ -137,6 +174,7 @@ namespace MuhurluKapi.Dialogue
             sendButton.interactable = false;
             playerInput.SetTextWithoutNotify("");
             orrinText.text = "Orrin düşünüyor...";
+            dialogueView?.Begin(message);
 
             var playerMessage = new OllamaClient.ChatMessage
             {
@@ -155,7 +193,8 @@ namespace MuhurluKapi.Dialogue
                         role = "system",
                         content = OrrinSystemPrompt +
                             $"\nGAME STATE (authoritative): trust={trustPoints}/{RequiredTrust}; " +
-                            $"seal_active={(sealedDoor != null && sealedDoor.IsPuzzleCompleted ? "true" : "false")}."
+                            $"seal_active={(sealedDoor != null && sealedDoor.IsPuzzleCompleted ? "true" : "false")}; " +
+                            $"diamonds_complete={(sealedDoor != null && sealedDoor.HasRequiredDiamonds ? "true" : "false")}."
                     }
                 };
 
@@ -179,11 +218,21 @@ namespace MuhurluKapi.Dialogue
                     content = JsonSerializer.Serialize(response)
                 });
 
+                bool previouslyConvinced = IsOrrinConvinced;
                 trustPoints = Mathf.Clamp(
                     trustPoints + response.TrustDelta.Value,
                     0,
                     RequiredTrust
                 );
+
+                if (!previouslyConvinced && IsOrrinConvinced)
+                {
+                    Debug.Log(sealedDoor != null && !sealedDoor.HasRequiredDiamonds
+                        ? "Orrin'in güvenini kazandın (3/3). Üç kadim elması E ile topla."
+                        : sealedDoor != null && sealedDoor.IsPuzzleCompleted
+                        ? "Orrin'in güvenini kazandın. Mühür etkin; Orrin'den kapıyı açmasını iste."
+                        : "Orrin'in güvenini kazandın (3/3). İkinci odadaki mühür taşını bul ve yakınına gidip E ile etkinleştir.");
+                }
 
                 Debug.Log(
                     $"Orrin karari: {response.Action}, " +
@@ -191,7 +240,11 @@ namespace MuhurluKapi.Dialogue
                     $"degisim: {response.TrustDelta.Value}"
                 );
 
-                if (response.Action == "open_door")
+                if (IsOrrinConvinced && sealedDoor != null && !sealedDoor.HasRequiredDiamonds)
+                {
+                    orrinText.text = "Orrin: Güvenimi kazandın, yolcu. Bu salondaki üç kadim elması bul ve yakındayken E ile topla. Ardından mühür taşını etkinleştir.\n\n[Güven: 3/3]";
+                }
+                else if (response.Action == "open_door")
                 {
                     if (!IsOrrinConvinced)
                     {
@@ -255,6 +308,7 @@ namespace MuhurluKapi.Dialogue
                 // An old cancelled request must not unlock a newer request.
                 if (OwnsRequest(request))
                 {
+                    dialogueView?.Complete(orrinText.text);
                     activeRequest = null;
                     isWaitingForResponse = false;
                     if (sendButton != null)
