@@ -12,18 +12,19 @@ public sealed class TempleMenu : MonoBehaviour
 {
     private const string MenuScene = "Assets/Scenes/MainMenu.unity";
     private const string GameScene = "Assets/Scenes/MainGame.unity";
-    private static readonly Color Night = new(.035f, .024f, .078f);
+    internal static readonly Color Night = new(.035f, .024f, .078f);
     private static readonly Color Stone = new(.12f, .085f, .20f);
-    private static readonly Color Gold = new(.90f, .68f, .35f);
-    private static readonly Color Teal = new(.28f, .88f, .85f);
-    private static readonly Color Violet = new(.52f, .28f, .85f);
-    private static readonly Color Ivory = new(.98f, .94f, .86f);
+    internal static readonly Color Gold = new(.90f, .68f, .35f);
+    internal static readonly Color Teal = new(.28f, .88f, .85f);
+    internal static readonly Color Violet = new(.52f, .28f, .85f);
+    internal static readonly Color Ivory = new(.98f, .94f, .86f);
 
     private static TempleMenu current;
     private static int resumeFrame = -1;
     public static bool HandlesEscape => current != null;
     public static bool IsPaused { get; private set; }
-    public static bool BlocksGameplay => IsPaused || Time.frameCount == resumeFrame;
+    internal static bool HasWon => current != null && current.portal != null && current.portal.IsVictoryVisible;
+    public static bool BlocksGameplay => IsPaused || HasWon || Time.frameCount == resumeFrame;
 
     private bool mainMenu;
     private bool loading;
@@ -84,6 +85,20 @@ public sealed class TempleMenu : MonoBehaviour
         else if (portal == null || !portal.IsVictoryVisible) Pause();
     }
 
+    internal static void ShowVictory()
+    {
+        if (current == null || current.mainMenu) return;
+        current.interaction?.TryCloseDialogue();
+        current.overlay.gameObject.SetActive(false);
+        IsPaused = false;
+        Time.timeScale = 0f;
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+        ClearSelection();
+        current.gameObject.AddComponent<TempleVictory>().Build(
+            () => current.Load(GameScene), () => current.Load(MenuScene));
+    }
+
     private void Pause()
     {
         cursorLock = Cursor.lockState;
@@ -132,18 +147,23 @@ public sealed class TempleMenu : MonoBehaviour
         Time.timeScale = 1f;
     }
 
-    private void Build()
+    internal static RectTransform CreateCanvas(Transform parent, string title, int sortOrder)
     {
-        var canvas = new GameObject("Tapınak menüsü", typeof(RectTransform), typeof(Canvas),
+        var canvas = new GameObject(title, typeof(RectTransform), typeof(Canvas),
             typeof(CanvasScaler), typeof(GraphicRaycaster));
-        canvas.transform.SetParent(transform, false);
+        canvas.transform.SetParent(parent, false);
         canvas.GetComponent<Canvas>().renderMode = RenderMode.ScreenSpaceOverlay;
-        canvas.GetComponent<Canvas>().sortingOrder = 200;
+        canvas.GetComponent<Canvas>().sortingOrder = sortOrder;
         var scaler = canvas.GetComponent<CanvasScaler>();
         scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
         scaler.referenceResolution = new Vector2(1280, 720);
         scaler.screenMatchMode = CanvasScaler.ScreenMatchMode.Expand;
-        var root = (RectTransform)canvas.transform;
+        return (RectTransform)canvas.transform;
+    }
+
+    private void Build()
+    {
+        var root = CreateCanvas(transform, "Tapınak menüsü", 200);
 
         if (!mainMenu)
         {
@@ -265,7 +285,7 @@ public sealed class TempleMenu : MonoBehaviour
         return panel;
     }
 
-    private static void Action(RectTransform parent, string title, float y, UnityEngine.Events.UnityAction action)
+    internal static Button Action(RectTransform parent, string title, float y, UnityEngine.Events.UnityAction action)
     {
         var rim = Tile(parent, 0, y, 328, 59, Gold);
         var face = Tile(rim, 0, 0, 324, 55, Stone);
@@ -281,9 +301,10 @@ public sealed class TempleMenu : MonoBehaviour
         button.colors = colors;
         button.onClick.AddListener(action);
         Label(face, title, 0, 0, 302, 51, 23, Ivory);
+        return button;
     }
 
-    private static RectTransform Fill(RectTransform parent, Color color)
+    internal static RectTransform Fill(RectTransform parent, Color color)
     {
         var tile = Tile(parent, 0, 0, 0, 0, color);
         tile.anchorMin = Vector2.zero;
@@ -293,7 +314,7 @@ public sealed class TempleMenu : MonoBehaviour
         return tile;
     }
 
-    private static RectTransform Tile(RectTransform parent, float x, float y, float w, float h, Color color)
+    internal static RectTransform Tile(RectTransform parent, float x, float y, float w, float h, Color color)
     {
         var rect = Rect(parent, x, y, w, h);
         var image = rect.gameObject.AddComponent<Image>();
@@ -302,7 +323,7 @@ public sealed class TempleMenu : MonoBehaviour
         return rect;
     }
 
-    private static TextMeshProUGUI Label(RectTransform parent, string value,
+    internal static TextMeshProUGUI Label(RectTransform parent, string value,
         float x, float y, float w, float h, int size, Color color)
     {
         var rect = Rect(parent, x, y, w, h);
@@ -316,7 +337,7 @@ public sealed class TempleMenu : MonoBehaviour
         return label;
     }
 
-    private static RectTransform Rect(RectTransform parent, float x, float y, float w, float h)
+    internal static RectTransform Rect(RectTransform parent, float x, float y, float w, float h)
     {
         var rect = (RectTransform)new GameObject("Tapınak • Arayüz", typeof(RectTransform)).transform;
         rect.SetParent(parent, false);

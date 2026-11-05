@@ -85,6 +85,7 @@ public sealed class TempleAudio : MonoBehaviour
         if (cue == TempleSound.Victory)
         {
             won = true;
+            foreach (var effect in voices) effect.Stop();
             if (clip != null && effectsVolume > 0f)
             {
                 victory.clip = clip;

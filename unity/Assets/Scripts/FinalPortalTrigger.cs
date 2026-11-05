@@ -34,10 +34,7 @@ public class FinalPortalTrigger : MonoBehaviour
         completed = true;
         TempleAudio.Play(TempleSound.Victory, transform.position);
 
-        if (victoryPanel != null)
-        {
-            victoryPanel.SetActive(true);
-        }
+        TempleMenu.ShowVictory();
 
         Debug.Log("Muhurlu Kapi - Bolum Tamamlandi!");
     }

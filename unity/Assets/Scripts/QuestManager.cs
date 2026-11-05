@@ -277,7 +277,7 @@ public sealed class QuestManager : MonoBehaviour
              (player != null && Vector3.Distance(player.position, transform.position) > interactionDistance)))
             CloseDialogue();
 
-        canvas.enabled = !TempleMenu.IsPaused && puzzle != null && (!enteredSecondRoom || realOrrin != null) && !IsDialogueOpen &&
+        canvas.enabled = !TempleMenu.IsPaused && !TempleMenu.HasWon && puzzle != null && (!enteredSecondRoom || realOrrin != null) && !IsDialogueOpen &&
             (dialoguePanel == null || !dialoguePanel.activeInHierarchy) &&
             (victoryPanel == null || !victoryPanel.activeInHierarchy);
         if (!canvas.enabled)
