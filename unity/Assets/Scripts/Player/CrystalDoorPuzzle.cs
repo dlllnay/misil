@@ -49,6 +49,7 @@ public class CrystalDoorPuzzle : MonoBehaviour
             nyraRune.IsActivated)
         {
             opening = true;
+            TempleAudio.Play(TempleSound.FirstGate, door.position);
             Debug.Log("Uc kristal aktif! Muhurlu kapi aciliyor!");
         }
 

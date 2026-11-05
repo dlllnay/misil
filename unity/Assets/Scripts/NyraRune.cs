@@ -47,6 +47,7 @@ public class NyraRune : MonoBehaviour
     private void Activate()
     {
         activated = true;
+        TempleAudio.Play(TempleSound.NyraSeal, transform.position);
 
         if (runeRenderer != null)
         {

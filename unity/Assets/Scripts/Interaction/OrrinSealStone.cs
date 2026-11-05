@@ -83,6 +83,7 @@ namespace MuhurluKapi.Interaction
             }
 
             Activate();
+            TempleAudio.Play(TempleSound.OrrinSeal, transform.position);
             Debug.Log("Orrin mührü etkinleşti. Orrin'e geri dön, F ile konuş ve kapıyı açmasını iste.", this);
         }
     }

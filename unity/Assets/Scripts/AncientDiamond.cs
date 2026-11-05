@@ -41,6 +41,7 @@ public sealed class AncientDiamond : MonoBehaviour
             return;
 
         IsCollected = true;
+        TempleAudio.Play(TempleSound.Diamond, transform.position);
         gameObject.SetActive(false);
     }
 

@@ -69,6 +69,7 @@ namespace MuhurluKapi.Door
             }
 
             IsOpen = true;
+            TempleAudio.Play(TempleSound.OrrinGate, transform.position);
             // Remove the visible door and its physics/navigation barriers together.
             // Rotating a box about its centre leaves an obstruction in the passage.
             gameObject.SetActive(false);

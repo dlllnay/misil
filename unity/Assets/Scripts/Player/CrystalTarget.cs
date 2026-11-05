@@ -14,6 +14,7 @@ public class CrystalTarget : MonoBehaviour
         if (activated) return;
 
         activated = true;
+        TempleAudio.Play(TempleSound.Crystal, transform.position);
 
         // Kristalin icindeki gorunur 3D modelleri bul.
         Renderer[] renderers =

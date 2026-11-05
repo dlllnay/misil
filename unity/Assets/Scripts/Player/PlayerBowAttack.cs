@@ -153,6 +153,7 @@ public class PlayerBowAttack : MonoBehaviour
             arrowSpawnPoint.position,
             rotation
         );
+        TempleAudio.Play(TempleSound.Arrow, arrowSpawnPoint.position);
 
         yield return new WaitForSeconds(0.7f);
         isAttacking = false;

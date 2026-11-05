@@ -31,6 +31,7 @@ public class FinalPortalTrigger : MonoBehaviour
         }
 
         completed = true;
+        TempleAudio.Play(TempleSound.Victory, transform.position);
 
         if (victoryPanel != null)
         {
