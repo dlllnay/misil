@@ -1,0 +1,10 @@
+Kaynak Unity günlük dosyası: misil-hard-temple-check.log
+Kaynak değiştirilme zamanı: 2026-11-05 17:43:25 +03:00
+Seçilmiş test satırları:
+MISIL HARD PATH: AncientDiamond3
+MISIL HARD PATH: AncientDiamond2
+MISIL HARD PATH: AncientDiamond1
+MISIL HARD PATH: Turkuaz
+MISIL HARD PATH: Mor
+MISIL HARD PATH: Altın
+MISIL HARD PASS: crystal/reset/hint, all six routes, seal prerequisites/wrong/timeout/retry/success, door guard and audio asset.

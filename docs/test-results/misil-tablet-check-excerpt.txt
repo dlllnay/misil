@@ -1,0 +1,4 @@
+Kaynak Unity günlük dosyası: misil-tablet-check.log
+Kaynak değiştirilme zamanı: 2026-11-05 18:05:23 +03:00
+Seçilmiş test satırları:
+TABLET PASS: four tablets, Turkish glyphs, no clipping, direct approach lines, six NavMesh paths

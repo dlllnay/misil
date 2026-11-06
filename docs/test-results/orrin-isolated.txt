@@ -1,0 +1,11 @@
+unity\Assets\Scripts\Dialogue\OrrinDialogueUI.cs(12,19): error CS0234: 'EventSystems' tür veya ad alanı adı 'UnityEngine' ad alanında yok (bir derleme başvurunuz mu eksik?)
+unity\Assets\Scripts\Door\DoorController.cs(4,19): error CS0234: 'Interaction' tür veya ad alanı adı 'MuhurluKapi' ad alanında yok (bir derleme başvurunuz mu eksik?)
+unity\Assets\Scripts\Dialogue\OrrinDialogueUI.cs(41,17): error CS0246: 'QuestManager' türü veya ad alanı adı bulunamadı (bir using yönergeniz veya derleme başvurunuz mu eksik?)
+unity\Assets\Scripts\Dialogue\OrrinDialogueUI.cs(47,17): error CS0246: 'CursorLockMode' türü veya ad alanı adı bulunamadı (bir using yönergeniz veya derleme başvurunuz mu eksik?)
+unity\Assets\Scripts\Dialogue\OrrinDialogueUI.cs(50,17): error CS0246: 'TempleDialogueView' türü veya ad alanı adı bulunamadı (bir using yönergeniz veya derleme başvurunuz mu eksik?)
+Exception: C:\Users\Onur BAŞARAN\misil\tests\orrin-errors\Run.ps1:26
+Line |
+  26 |  …  ($LASTEXITCODE -ne 0) { throw 'Isolated check compilation failed.' }
+     |                             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Isolated check compilation failed.
+ExitCode=1

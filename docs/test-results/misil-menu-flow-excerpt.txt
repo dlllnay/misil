@@ -1,0 +1,4 @@
+Kaynak Unity günlük dosyası: misil-menu-flow.log
+Kaynak değiştirilme zamanı: 2026-11-05 18:27:19 +03:00
+Seçilmiş test satırları:
+TEMPLE MENU PASS
